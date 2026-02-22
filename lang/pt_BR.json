@@ -1,0 +1,5 @@
+{
+    "filament-tables::table.search.placeholder": "Pesquisar",
+    "filament-tables::table.search.label": "Pesquisar",
+    "filament-tables::table.actions.filter.label": "Filtrar"
+}
