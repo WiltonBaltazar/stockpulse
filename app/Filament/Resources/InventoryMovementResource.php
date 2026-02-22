@@ -78,11 +78,15 @@ class InventoryMovementResource extends Resource
                     ->formatStateUsing(fn (string $state): string => self::formatType($state))
                     ->color(fn (string $state): string => self::typeColor($state)),
                 TextColumn::make('quantity_g')
-                    ->label('Quantidade (g)')
-                    ->formatStateUsing(function (float $state): string {
+                    ->label('Quantidade')
+                    ->formatStateUsing(function (float $state, InventoryMovement $record): string {
                         $prefix = $state >= 0 ? '+' : '';
 
-                        return $prefix.self::formatQuantity($state);
+                        if ($record->ingredient) {
+                            return $prefix.$record->ingredient->formatBaseQuantity(abs($state));
+                        }
+
+                        return $prefix.self::formatQuantity($state).' unid. base';
                     })
                     ->color(fn (float $state): string => $state >= 0 ? 'success' : 'danger')
                     ->sortable(),

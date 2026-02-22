@@ -38,7 +38,8 @@ class ProductionBatchService
      *   }>,
      *   shortages: array<int, array{
      *      ingredient_name: string,
-     *      shortage_g: float
+     *      shortage_g: float,
+     *      shortage_unit: string
      *   }>
      * }
      */
@@ -73,6 +74,7 @@ class ProductionBatchService
                 $shortages[] = [
                     'ingredient_name' => $ingredient->name,
                     'shortage_g' => abs($remainingStock),
+                    'shortage_unit' => $ingredient->baseUnit(),
                 ];
             }
 
@@ -163,9 +165,10 @@ class ProductionBatchService
             if ($snapshot['shortages'] !== []) {
                 $messages = collect($snapshot['shortages'])
                     ->map(fn (array $shortage): string => sprintf(
-                        '%s: faltam %s g.',
+                        '%s: faltam %s %s.',
                         $shortage['ingredient_name'],
-                        number_format((float) round((float) $shortage['shortage_g']), 0, ',', '.')
+                        number_format((float) round((float) $shortage['shortage_g']), 0, ',', '.'),
+                        (string) ($shortage['shortage_unit'] ?? 'g')
                     ))
                     ->implode(' ');
 

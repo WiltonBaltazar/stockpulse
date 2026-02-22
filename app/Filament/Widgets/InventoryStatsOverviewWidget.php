@@ -62,12 +62,12 @@ class InventoryStatsOverviewWidget extends BaseWidget
                 ->descriptionIcon($lowStockCount > 0 ? 'heroicon-m-exclamation-triangle' : 'heroicon-m-check-circle')
                 ->color($lowStockCount > 0 ? 'danger' : 'success')
                 ->url(IngredientResource::getUrl('index')),
-            Stat::make('Entradas (30 dias)', $this->quantity($entries30Days).' g')
+            Stat::make('Entradas (30 dias)', $this->quantity($entries30Days).' unid. base')
                 ->description('Compras e ajustes positivos')
                 ->descriptionIcon('heroicon-m-arrow-down-circle')
                 ->color('success')
                 ->url(InventoryMovementResource::getUrl('index')),
-            Stat::make('Saídas manuais (30 dias)', $this->quantity(abs($manualOut30Days)).' g')
+            Stat::make('Saídas manuais (30 dias)', $this->quantity(abs($manualOut30Days)).' unid. base')
                 ->description('Perdas, descartes e uso fora de receita')
                 ->descriptionIcon('heroicon-m-arrow-up-circle')
                 ->color(abs($manualOut30Days) > 0 ? 'warning' : 'gray')

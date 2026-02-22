@@ -35,21 +35,21 @@ class LowStockIngredientsWidget extends BaseWidget
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('stock_quantity_g')
-                    ->label('Estoque (g)')
-                    ->formatStateUsing(fn (float $state): HtmlString => new HtmlString(
-                        '<span style="color:#991b1b;font-weight:600;">'.e(self::formatQuantity($state)).'</span>'
+                    ->label('Estoque')
+                    ->formatStateUsing(fn (float $state, Ingredient $record): HtmlString => new HtmlString(
+                        '<span style="color:#991b1b;font-weight:600;">'.e($record->formatBaseQuantity($state)).'</span>'
                     ))
                     ->sortable()
                     ->html(),
                 Tables\Columns\TextColumn::make('reorder_level_g')
-                    ->label('Reposição (g)')
-                    ->formatStateUsing(fn (float $state): string => self::formatQuantity($state))
+                    ->label('Reposição')
+                    ->formatStateUsing(fn (float $state, Ingredient $record): string => $record->formatBaseQuantity($state))
                     ->sortable(),
                 Tables\Columns\TextColumn::make('shortage_g')
-                    ->label('Falta para repor (g)')
+                    ->label('Falta para repor')
                     ->getStateUsing(fn (Ingredient $record): float => max((float) $record->reorder_level_g - (float) $record->stock_quantity_g, 0.0))
-                    ->formatStateUsing(fn (float $state): HtmlString => new HtmlString(
-                        '<span style="color:#991b1b;font-weight:600;">'.e(self::formatQuantity($state)).'</span>'
+                    ->formatStateUsing(fn (float $state, Ingredient $record): HtmlString => new HtmlString(
+                        '<span style="color:#991b1b;font-weight:600;">'.e($record->formatBaseQuantity($state)).'</span>'
                     ))
                     ->html(),
             ])
@@ -77,10 +77,5 @@ class LowStockIngredientsWidget extends BaseWidget
         }
 
         return $query;
-    }
-
-    private static function formatQuantity(float $value): string
-    {
-        return number_format((float) round($value), 0, ',', '.');
     }
 }

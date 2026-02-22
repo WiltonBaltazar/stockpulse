@@ -36,10 +36,13 @@ class InventoryMovementService
             $nextStock = (int) round((float) $lockedIngredient->stock_quantity_g) + $quantityG;
 
             if ($nextStock < 0) {
+                $baseUnit = $lockedIngredient->baseUnit();
+
                 throw ValidationException::withMessages([
                     'quantity_g' => sprintf(
-                        'Estoque insuficiente. Disponível: %s g.',
-                        number_format(max((float) round((float) $lockedIngredient->stock_quantity_g), 0), 0, ',', '.')
+                        'Estoque insuficiente. Disponível: %s %s.',
+                        number_format(max((float) round((float) $lockedIngredient->stock_quantity_g), 0), 0, ',', '.'),
+                        $baseUnit,
                     ),
                 ]);
             }

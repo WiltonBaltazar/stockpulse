@@ -84,9 +84,10 @@ class CreateProductionBatch extends CreateRecord
 
         $details = collect($shortages)
             ->map(fn (array $item): string => sprintf(
-                '%s (%s g)',
+                '%s (%s %s)',
                 $item['ingredient_name'],
-                number_format((float) round((float) $item['shortage_g']), 0, ',', '.')
+                number_format((float) round((float) $item['shortage_g']), 0, ',', '.'),
+                (string) ($item['shortage_unit'] ?? 'g')
             ))
             ->implode(', ');
 

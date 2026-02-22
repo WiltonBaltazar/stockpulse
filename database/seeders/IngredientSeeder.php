@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Ingredient;
+use App\Support\MeasurementUnitConverter;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 
@@ -69,6 +70,8 @@ class IngredientSeeder extends Seeder
         $stockMultiplier = 2.5;
 
         foreach ($ingredients as $ingredient) {
+            $measurementMeta = $this->measurementMetaFor($ingredient['name'], (float) $ingredient['package_quantity_g']);
+
             Ingredient::query()->updateOrCreate(
                 [
                     'user_id' => $user->id,
@@ -78,9 +81,58 @@ class IngredientSeeder extends Seeder
                     'user_id' => $user->id,
                     'stock_quantity_g' => (float) $ingredient['package_quantity_g'] * $stockMultiplier,
                     'reorder_level_g' => (float) $ingredient['package_quantity_g'] * 0.5,
+                    'measurement_type' => $measurementMeta['measurement_type'],
+                    'preferred_unit' => $measurementMeta['preferred_unit'],
+                    'density_g_per_ml' => $measurementMeta['density_g_per_ml'],
                     'is_active' => true,
                 ]
             );
         }
+    }
+
+    /**
+     * @return array{measurement_type: string, preferred_unit: string, density_g_per_ml: ?float}
+     */
+    private function measurementMetaFor(string $ingredientName, float $packageQuantityBase): array
+    {
+        $name = mb_strtolower($ingredientName);
+
+        if (str_contains($name, 'ovos') || str_contains($name, 'embalagem')) {
+            return [
+                'measurement_type' => Ingredient::MEASUREMENT_UNIT,
+                'preferred_unit' => MeasurementUnitConverter::UNIT_UNIT,
+                'density_g_per_ml' => null,
+            ];
+        }
+
+        if (str_contains($name, 'óleo') || str_contains($name, 'oleo')) {
+            return [
+                'measurement_type' => Ingredient::MEASUREMENT_VOLUME,
+                'preferred_unit' => $packageQuantityBase >= 1000 ? MeasurementUnitConverter::UNIT_L : MeasurementUnitConverter::UNIT_ML,
+                'density_g_per_ml' => 0.92,
+            ];
+        }
+
+        if (str_contains($name, 'mel')) {
+            return [
+                'measurement_type' => Ingredient::MEASUREMENT_VOLUME,
+                'preferred_unit' => $packageQuantityBase >= 1000 ? MeasurementUnitConverter::UNIT_L : MeasurementUnitConverter::UNIT_ML,
+                'density_g_per_ml' => 1.42,
+            ];
+        }
+
+        if (str_contains($name, 'leite') || str_contains($name, 'baunilha')) {
+            return [
+                'measurement_type' => Ingredient::MEASUREMENT_VOLUME,
+                'preferred_unit' => $packageQuantityBase >= 1000 ? MeasurementUnitConverter::UNIT_L : MeasurementUnitConverter::UNIT_ML,
+                'density_g_per_ml' => 1.0,
+            ];
+        }
+
+        return [
+            'measurement_type' => Ingredient::MEASUREMENT_MASS,
+            'preferred_unit' => $packageQuantityBase >= 1000 ? MeasurementUnitConverter::UNIT_KG : MeasurementUnitConverter::UNIT_G,
+            'density_g_per_ml' => 1.0,
+        ];
     }
 }

@@ -6,11 +6,14 @@ use App\Filament\Resources\IngredientResource\Pages;
 use App\Models\Ingredient;
 use App\Models\InventoryMovement;
 use App\Services\InventoryMovementService;
+use App\Support\MeasurementUnitConverter;
 use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -22,6 +25,8 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\HtmlString;
+use Illuminate\Validation\ValidationException;
+use InvalidArgumentException;
 
 class IngredientResource extends Resource
 {
@@ -64,14 +69,50 @@ class IngredientResource extends Resource
                     ->label('Nome')
                     ->required()
                     ->maxLength(255),
-                TextInput::make('package_quantity_g')
-                    ->label('Quantidade da Embalagem (g)')
-                    ->numeric()
-                    ->integer()
+                Select::make('measurement_type')
+                    ->label('Tipo de medição')
+                    ->options(Ingredient::measurementTypeOptions())
                     ->required()
-                    ->dehydrateStateUsing(fn ($state): int => max((int) ($state ?? 0), 1))
-                    ->minValue(1)
-                    ->step(1),
+                    ->default(Ingredient::MEASUREMENT_MASS)
+                    ->native(false)
+                    ->live(),
+                Select::make('preferred_unit')
+                    ->label('Unidade preferida para exibição')
+                    ->options(fn (Get $get): array => Ingredient::preferredUnitOptionsForType((string) ($get('measurement_type') ?: Ingredient::MEASUREMENT_MASS)))
+                    ->required()
+                    ->default(fn (Get $get): string => Ingredient::baseUnitForType((string) ($get('measurement_type') ?: Ingredient::MEASUREMENT_MASS)))
+                    ->native(false)
+                    ->helperText('Esta unidade será usada para mostrar quantidades no sistema.'),
+                TextInput::make('density_g_per_ml')
+                    ->label('Densidade (g/ml)')
+                    ->numeric()
+                    ->minValue(0.01)
+                    ->step(0.0001)
+                    ->default(1)
+                    ->visible(fn (Get $get): bool => (string) ($get('measurement_type') ?: Ingredient::MEASUREMENT_MASS) !== Ingredient::MEASUREMENT_UNIT)
+                    ->helperText('Use 1 para água/leite, 0,92 para óleo, 1,42 para mel.'),
+                TextInput::make('package_quantity_g')
+                    ->label('Quantidade da Embalagem')
+                    ->numeric()
+                    ->required()
+                    ->minValue(0.0001)
+                    ->step(0.001)
+                    ->suffix(fn (Get $get): string => self::shortUnit((string) ($get('package_input_unit') ?: Ingredient::baseUnitForType((string) ($get('measurement_type') ?: Ingredient::MEASUREMENT_MASS)))))
+                    ->dehydrateStateUsing(fn ($state, Get $get): int => self::toBaseQuantityOrFail(
+                        value: $state,
+                        measurementType: (string) ($get('measurement_type') ?: Ingredient::MEASUREMENT_MASS),
+                        unit: (string) ($get('package_input_unit') ?: Ingredient::baseUnitForType((string) ($get('measurement_type') ?: Ingredient::MEASUREMENT_MASS))),
+                        density: (float) ($get('density_g_per_ml') ?: 0),
+                        field: 'package_quantity_g',
+                        minBase: 1,
+                    )),
+                Select::make('package_input_unit')
+                    ->label('Unidade da embalagem')
+                    ->options(fn (Get $get): array => Ingredient::inputUnitsForType((string) ($get('measurement_type') ?: Ingredient::MEASUREMENT_MASS)))
+                    ->default(fn (Get $get): string => Ingredient::baseUnitForType((string) ($get('measurement_type') ?: Ingredient::MEASUREMENT_MASS)))
+                    ->dehydrated(false)
+                    ->required()
+                    ->native(false),
                 TextInput::make('package_cost')
                     ->label('Custo da Embalagem')
                     ->numeric()
@@ -80,28 +121,57 @@ class IngredientResource extends Resource
                     ->step(0.01)
                     ->suffix('MT'),
                 TextInput::make('stock_quantity_g')
-                    ->label('Estoque Atual (g)')
+                    ->label('Estoque Atual')
                     ->numeric()
-                    ->integer()
                     ->required()
-                    ->dehydrateStateUsing(fn ($state): int => max((int) ($state ?? 0), 0))
                     ->minValue(0)
-                    ->step(1)
-                    ->default(0),
+                    ->step(0.001)
+                    ->default(0)
+                    ->suffix(fn (Get $get): string => self::shortUnit((string) ($get('stock_input_unit') ?: Ingredient::baseUnitForType((string) ($get('measurement_type') ?: Ingredient::MEASUREMENT_MASS)))))
+                    ->dehydrateStateUsing(fn ($state, Get $get): int => self::toBaseQuantityOrFail(
+                        value: $state,
+                        measurementType: (string) ($get('measurement_type') ?: Ingredient::MEASUREMENT_MASS),
+                        unit: (string) ($get('stock_input_unit') ?: Ingredient::baseUnitForType((string) ($get('measurement_type') ?: Ingredient::MEASUREMENT_MASS))),
+                        density: (float) ($get('density_g_per_ml') ?: 0),
+                        field: 'stock_quantity_g',
+                        minBase: 0,
+                    )),
+                Select::make('stock_input_unit')
+                    ->label('Unidade do estoque')
+                    ->options(fn (Get $get): array => Ingredient::inputUnitsForType((string) ($get('measurement_type') ?: Ingredient::MEASUREMENT_MASS)))
+                    ->default(fn (Get $get): string => Ingredient::baseUnitForType((string) ($get('measurement_type') ?: Ingredient::MEASUREMENT_MASS)))
+                    ->dehydrated(false)
+                    ->required()
+                    ->native(false),
                 TextInput::make('reorder_level_g')
-                    ->label('Ponto de Reposição (g)')
+                    ->label('Ponto de Reposição')
                     ->numeric()
-                    ->integer()
                     ->required()
-                    ->dehydrateStateUsing(fn ($state): int => max((int) ($state ?? 0), 0))
                     ->minValue(0)
-                    ->step(1)
-                    ->default(0),
+                    ->step(0.001)
+                    ->default(0)
+                    ->suffix(fn (Get $get): string => self::shortUnit((string) ($get('reorder_input_unit') ?: Ingredient::baseUnitForType((string) ($get('measurement_type') ?: Ingredient::MEASUREMENT_MASS)))))
+                    ->dehydrateStateUsing(fn ($state, Get $get): int => self::toBaseQuantityOrFail(
+                        value: $state,
+                        measurementType: (string) ($get('measurement_type') ?: Ingredient::MEASUREMENT_MASS),
+                        unit: (string) ($get('reorder_input_unit') ?: Ingredient::baseUnitForType((string) ($get('measurement_type') ?: Ingredient::MEASUREMENT_MASS))),
+                        density: (float) ($get('density_g_per_ml') ?: 0),
+                        field: 'reorder_level_g',
+                        minBase: 0,
+                    )),
+                Select::make('reorder_input_unit')
+                    ->label('Unidade da reposição')
+                    ->options(fn (Get $get): array => Ingredient::inputUnitsForType((string) ($get('measurement_type') ?: Ingredient::MEASUREMENT_MASS)))
+                    ->default(fn (Get $get): string => Ingredient::baseUnitForType((string) ($get('measurement_type') ?: Ingredient::MEASUREMENT_MASS)))
+                    ->dehydrated(false)
+                    ->required()
+                    ->native(false),
                 Toggle::make('is_active')
                     ->label('Ativo')
                     ->default(true)
                     ->required(),
-            ]);
+            ])
+            ->columns(2);
     }
 
     public static function table(Table $table): Table
@@ -112,25 +182,34 @@ class IngredientResource extends Resource
                     ->label('Nome')
                     ->searchable()
                     ->sortable(),
+                TextColumn::make('measurement_type')
+                    ->label('Medição')
+                    ->badge()
+                    ->formatStateUsing(fn (string $state): string => Ingredient::measurementTypeOptions()[$state] ?? $state)
+                    ->color(fn (string $state): string => match ($state) {
+                        Ingredient::MEASUREMENT_MASS => 'info',
+                        Ingredient::MEASUREMENT_VOLUME => 'warning',
+                        Ingredient::MEASUREMENT_UNIT => 'gray',
+                        default => 'gray',
+                    }),
                 TextColumn::make('package_quantity_g')
-                    ->label('Qtd. (g)')
-                    ->formatStateUsing(fn (float $state): string => self::formatQuantity($state))
+                    ->label('Qtd. embalagem')
+                    ->formatStateUsing(fn (float $state, Ingredient $record): string => self::formatIngredientQuantity($record, $state))
                     ->sortable(),
                 TextColumn::make('package_cost')
                     ->label('Custo')
                     ->formatStateUsing(fn (float $state): string => self::formatCurrency($state))
                     ->sortable(),
                 TextColumn::make('cost_per_gram')
-                    ->label('Custo / g')
-                    ->formatStateUsing(fn (float $state): string => self::formatCurrency($state))
-                    ->sortable(),
+                    ->label('Custo / unidade')
+                    ->getStateUsing(fn (Ingredient $record): string => self::formatCurrency($record->cost_per_base_unit).' / '.$record->baseUnit()),
                 TextColumn::make('stock_quantity_g')
-                    ->label('Estoque (g)')
-                    ->formatStateUsing(fn (float $state): string => self::formatQuantity($state))
+                    ->label('Estoque')
+                    ->formatStateUsing(fn (float $state, Ingredient $record): string => self::formatIngredientQuantity($record, $state))
                     ->sortable(),
                 TextColumn::make('reorder_level_g')
-                    ->label('Reposição (g)')
-                    ->formatStateUsing(fn (float $state): string => self::formatQuantity($state))
+                    ->label('Reposição')
+                    ->formatStateUsing(fn (float $state, Ingredient $record): string => self::formatIngredientQuantity($record, $state))
                     ->sortable(),
                 TextColumn::make('stock_status')
                     ->label('Estado do estoque')
@@ -175,14 +254,18 @@ class IngredientResource extends Resource
                     ->icon('heroicon-o-arrow-down-circle')
                     ->color('success')
                     ->form([
-                        TextInput::make('quantity_g')
-                            ->label('Quantidade a adicionar (g)')
+                        TextInput::make('quantity_input')
+                            ->label('Quantidade a adicionar')
                             ->numeric()
-                            ->integer()
                             ->required()
-                            ->dehydrateStateUsing(fn ($state): int => max((int) ($state ?? 0), 1))
-                            ->minValue(1)
-                            ->step(1),
+                            ->minValue(0.0001)
+                            ->step(0.001),
+                        Select::make('quantity_unit')
+                            ->label('Unidade')
+                            ->options(fn (Ingredient $record): array => Ingredient::inputUnitsForType($record->measurement_type))
+                            ->default(fn (Ingredient $record): string => $record->preferred_unit)
+                            ->required()
+                            ->native(false),
                         TextInput::make('total_cost')
                             ->label('Custo total da compra (opcional)')
                             ->numeric()
@@ -203,11 +286,20 @@ class IngredientResource extends Resource
                             return;
                         }
 
+                        $quantityBase = self::toBaseQuantityOrFail(
+                            value: $data['quantity_input'] ?? 0,
+                            measurementType: $record->measurement_type,
+                            unit: (string) ($data['quantity_unit'] ?? $record->preferred_unit),
+                            density: (float) ($record->density_g_per_ml ?? 0),
+                            field: 'quantity_input',
+                            minBase: 1,
+                        );
+
                         app(InventoryMovementService::class)->record(
                             ingredient: $record,
                             user: $user,
                             type: InventoryMovement::TYPE_PURCHASE,
-                            quantityG: (int) ($data['quantity_g'] ?? 0),
+                            quantityG: $quantityBase,
                             movedAt: $data['moved_at'] ?? now(),
                             notes: $data['notes'] ?? null,
                             totalCost: isset($data['total_cost']) ? (float) $data['total_cost'] : null,
@@ -223,14 +315,18 @@ class IngredientResource extends Resource
                     ->icon('heroicon-o-arrow-up-circle')
                     ->color('danger')
                     ->form([
-                        TextInput::make('quantity_g')
-                            ->label('Quantidade a retirar (g)')
+                        TextInput::make('quantity_input')
+                            ->label('Quantidade a retirar')
                             ->numeric()
-                            ->integer()
                             ->required()
-                            ->dehydrateStateUsing(fn ($state): int => max((int) ($state ?? 0), 1))
-                            ->minValue(1)
-                            ->step(1),
+                            ->minValue(0.0001)
+                            ->step(0.001),
+                        Select::make('quantity_unit')
+                            ->label('Unidade')
+                            ->options(fn (Ingredient $record): array => Ingredient::inputUnitsForType($record->measurement_type))
+                            ->default(fn (Ingredient $record): string => $record->preferred_unit)
+                            ->required()
+                            ->native(false),
                         DateTimePicker::make('moved_at')
                             ->label('Data/hora')
                             ->default(now())
@@ -246,11 +342,20 @@ class IngredientResource extends Resource
                             return;
                         }
 
+                        $quantityBase = self::toBaseQuantityOrFail(
+                            value: $data['quantity_input'] ?? 0,
+                            measurementType: $record->measurement_type,
+                            unit: (string) ($data['quantity_unit'] ?? $record->preferred_unit),
+                            density: (float) ($record->density_g_per_ml ?? 0),
+                            field: 'quantity_input',
+                            minBase: 1,
+                        );
+
                         app(InventoryMovementService::class)->record(
                             ingredient: $record,
                             user: $user,
                             type: InventoryMovement::TYPE_MANUAL_OUT,
-                            quantityG: -1 * (int) ($data['quantity_g'] ?? 0),
+                            quantityG: -1 * $quantityBase,
                             movedAt: $data['moved_at'] ?? now(),
                             notes: $data['notes'] ?? null,
                         );
@@ -265,15 +370,26 @@ class IngredientResource extends Resource
                     ->icon('heroicon-o-adjustments-horizontal')
                     ->color('warning')
                     ->form([
-                        TextInput::make('new_stock_quantity_g')
-                            ->label('Novo estoque contado (g)')
+                        TextInput::make('new_stock_quantity_input')
+                            ->label('Novo estoque contado')
                             ->numeric()
-                            ->integer()
                             ->required()
-                            ->dehydrateStateUsing(fn ($state): int => max((int) ($state ?? 0), 0))
                             ->minValue(0)
-                            ->step(1)
-                            ->default(fn (Ingredient $record): int => (int) round((float) $record->stock_quantity_g)),
+                            ->step(0.001)
+                            ->default(function (Ingredient $record): float {
+                                return MeasurementUnitConverter::fromBase(
+                                    baseValue: (float) $record->stock_quantity_g,
+                                    unit: $record->preferred_unit,
+                                    measurementType: $record->measurement_type,
+                                    densityGPerMl: $record->density_g_per_ml,
+                                );
+                            }),
+                        Select::make('new_stock_unit')
+                            ->label('Unidade')
+                            ->options(fn (Ingredient $record): array => Ingredient::inputUnitsForType($record->measurement_type))
+                            ->default(fn (Ingredient $record): string => $record->preferred_unit)
+                            ->required()
+                            ->native(false),
                         DateTimePicker::make('moved_at')
                             ->label('Data/hora')
                             ->default(now())
@@ -290,7 +406,16 @@ class IngredientResource extends Resource
                         }
 
                         $record->refresh();
-                        $newStock = max((int) ($data['new_stock_quantity_g'] ?? 0), 0);
+
+                        $newStock = self::toBaseQuantityOrFail(
+                            value: $data['new_stock_quantity_input'] ?? 0,
+                            measurementType: $record->measurement_type,
+                            unit: (string) ($data['new_stock_unit'] ?? $record->preferred_unit),
+                            density: (float) ($record->density_g_per_ml ?? 0),
+                            field: 'new_stock_quantity_input',
+                            minBase: 0,
+                        );
+
                         $currentStock = (int) round((float) $record->stock_quantity_g);
                         $delta = $newStock - $currentStock;
 
@@ -342,9 +467,48 @@ class IngredientResource extends Resource
         ];
     }
 
-    private static function formatQuantity(float $value): string
+    private static function toBaseQuantityOrFail(
+        mixed $value,
+        string $measurementType,
+        string $unit,
+        float $density,
+        string $field,
+        int $minBase,
+    ): int {
+        $numericValue = MeasurementUnitConverter::normalizeNumber($value);
+
+        try {
+            $base = MeasurementUnitConverter::toBase(
+                value: $numericValue,
+                unit: $unit,
+                measurementType: $measurementType,
+                densityGPerMl: $density,
+            );
+        } catch (InvalidArgumentException $exception) {
+            throw ValidationException::withMessages([
+                $field => $exception->getMessage(),
+            ]);
+        }
+
+        $baseRounded = (int) round($base);
+
+        if ($baseRounded < $minBase) {
+            throw ValidationException::withMessages([
+                $field => 'Informe uma quantidade válida maior que zero.',
+            ]);
+        }
+
+        return $baseRounded;
+    }
+
+    private static function formatIngredientQuantity(Ingredient $ingredient, float $baseValue): string
     {
-        return number_format((float) round($value), 0, ',', '.');
+        return $ingredient->formatBaseQuantity($baseValue);
+    }
+
+    private static function shortUnit(string $unit): string
+    {
+        return MeasurementUnitConverter::shortUnitLabel($unit);
     }
 
     private static function formatCurrency(float $value): string

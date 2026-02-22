@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\RecipeResource\Pages;
 use App\Models\Ingredient;
 use App\Models\Recipe;
+use App\Support\MeasurementUnitConverter;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Repeater;
@@ -13,6 +14,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
+use Filament\Forms\Set;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
@@ -20,6 +22,8 @@ use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
+use InvalidArgumentException;
 
 class RecipeResource extends Resource
 {
@@ -80,7 +84,7 @@ class RecipeResource extends Resource
                             ->content('Fator aplicado após custos para definir margem/lucro.'),
                         Placeholder::make('guide_items')
                             ->label('Itens da Receita')
-                            ->content('Selecione cada ingrediente e informe a quantidade usada em gramas (ou unidades).'),
+                            ->content('Selecione cada ingrediente, informe quantidade e unidade (kg, g, L, ml, colher, chávena ou un).'),
                         Placeholder::make('guide_formulas')
                             ->label('Cálculo automático')
                             ->content('1) Soma ingredientes, 2) aplica custos indiretos, 3) aplica multiplicador, 4) divide pelo rendimento e 5) soma embalagem por unidade.'),
@@ -155,18 +159,96 @@ class RecipeResource extends Resource
                                     })
                                     ->searchable()
                                     ->preload()
+                                    ->live()
+                                    ->afterStateUpdated(function (Set $set, ?string $state): void {
+                                        if (! $state) {
+                                            $set('quantity_unit', MeasurementUnitConverter::UNIT_G);
+
+                                            return;
+                                        }
+
+                                        $ingredient = Ingredient::query()->find((int) $state);
+                                        $set('quantity_unit', $ingredient?->baseUnit() ?? MeasurementUnitConverter::UNIT_G);
+                                    })
                                     ->required(),
                                 TextInput::make('quantity_used_g')
-                                    ->label('Usado (g)')
+                                    ->label('Quantidade usada')
                                     ->numeric()
-                                    ->integer()
-                                    ->dehydrateStateUsing(fn ($state): int => max((int) ($state ?? 0), 1))
-                                    ->minValue(1)
-                                    ->step(1)
+                                    ->dehydrateStateUsing(function ($state, Get $get): int {
+                                        $ingredientId = (int) ($get('ingredient_id') ?? 0);
+                                        $unit = (string) ($get('quantity_unit') ?? MeasurementUnitConverter::UNIT_G);
+
+                                        if ($ingredientId <= 0) {
+                                            return max((int) round(MeasurementUnitConverter::normalizeNumber($state)), 1);
+                                        }
+
+                                        $ingredient = Ingredient::query()->find($ingredientId);
+                                        if (! $ingredient) {
+                                            return max((int) round(MeasurementUnitConverter::normalizeNumber($state)), 1);
+                                        }
+
+                                        try {
+                                            $baseQuantity = MeasurementUnitConverter::toBase(
+                                                value: MeasurementUnitConverter::normalizeNumber($state),
+                                                unit: $unit,
+                                                measurementType: $ingredient->measurement_type,
+                                                densityGPerMl: $ingredient->density_g_per_ml,
+                                            );
+                                        } catch (InvalidArgumentException $exception) {
+                                            throw ValidationException::withMessages([
+                                                'items' => $exception->getMessage(),
+                                            ]);
+                                        }
+
+                                        return max((int) round($baseQuantity), 1);
+                                    })
+                                    ->minValue(0.0001)
+                                    ->step(0.001)
+                                    ->suffix(fn (Get $get): string => MeasurementUnitConverter::shortUnitLabel((string) ($get('quantity_unit') ?? MeasurementUnitConverter::UNIT_G)))
                                     ->required(),
+                                Select::make('quantity_unit')
+                                    ->label('Unidade')
+                                    ->options(function (Get $get): array {
+                                        $ingredientId = (int) ($get('ingredient_id') ?? 0);
+                                        if ($ingredientId <= 0) {
+                                            return [
+                                                MeasurementUnitConverter::UNIT_G => 'g',
+                                                MeasurementUnitConverter::UNIT_KG => 'kg',
+                                                MeasurementUnitConverter::UNIT_ML => 'ml',
+                                                MeasurementUnitConverter::UNIT_L => 'L',
+                                                MeasurementUnitConverter::UNIT_UNIT => 'un',
+                                            ];
+                                        }
+
+                                        $ingredient = Ingredient::query()->find($ingredientId);
+                                        if (! $ingredient) {
+                                            return Ingredient::inputUnitsForType(Ingredient::MEASUREMENT_MASS);
+                                        }
+
+                                        return Ingredient::inputUnitsForType($ingredient->measurement_type);
+                                    })
+                                    ->default(MeasurementUnitConverter::UNIT_G)
+                                    ->afterStateHydrated(function (Set $set, Get $get, $state): void {
+                                        if (filled($state)) {
+                                            return;
+                                        }
+
+                                        $ingredientId = (int) ($get('ingredient_id') ?? 0);
+                                        if ($ingredientId <= 0) {
+                                            $set('quantity_unit', MeasurementUnitConverter::UNIT_G);
+
+                                            return;
+                                        }
+
+                                        $ingredient = Ingredient::query()->find($ingredientId);
+                                        $set('quantity_unit', $ingredient?->baseUnit() ?? MeasurementUnitConverter::UNIT_G);
+                                    })
+                                    ->dehydrated(false)
+                                    ->required()
+                                    ->native(false),
                             ])
                             ->defaultItems(1)
-                            ->columns(2)
+                            ->columns(3)
                             ->columnSpanFull(),
                     ]),
                 Section::make('Resumo da Precificação')
@@ -320,7 +402,7 @@ class RecipeResource extends Resource
 
         return (float) collect($items)->sum(function (array $item) use ($ingredients): float {
             $ingredientId = $item['ingredient_id'] ?? null;
-            $quantityUsed = (int) ($item['quantity_used_g'] ?? 0);
+            $quantityUsed = (float) ($item['quantity_used_g'] ?? 0);
 
             if (! $ingredientId || $quantityUsed <= 0) {
                 return 0.0;

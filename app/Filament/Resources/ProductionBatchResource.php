@@ -205,9 +205,10 @@ class ProductionBatchResource extends Resource
 
                                 $rows = collect($shortages)
                                     ->map(fn (array $item): string => sprintf(
-                                        '<li><strong>%s</strong>: faltam %s g</li>',
+                                        '<li><strong>%s</strong>: faltam %s %s</li>',
                                         e((string) ($item['ingredient_name'] ?? '-')),
-                                        number_format((float) round((float) ($item['shortage_g'] ?? 0)), 0, ',', '.')
+                                        number_format((float) round((float) ($item['shortage_g'] ?? 0)), 0, ',', '.'),
+                                        e((string) ($item['shortage_unit'] ?? 'g'))
                                     ))
                                     ->implode('');
 
@@ -328,7 +329,7 @@ class ProductionBatchResource extends Resource
                                 TextEntry::make('ingredient_name')
                                     ->label('Ingrediente'),
                                 TextEntry::make('quantity_used_g')
-                                    ->label('Quantidade (g)')
+                                    ->label('Quantidade consumida')
                                     ->formatStateUsing(fn (float $state): string => number_format((float) round($state), 0, ',', '.')),
                                 TextEntry::make('unit_cost')
                                     ->label('Custo/g')
