@@ -131,15 +131,15 @@ class FinancialControl extends Page
                 'tone' => 'success',
             ],
             [
-                'label' => 'Custo vendido',
+                'label' => 'Custo do que foi vendido (vendas)',
                 'value' => $this->currency($salesCost),
-                'description' => 'CPV realizado por lote (FIFO)',
+                'description' => 'Custo do que foi vendido por lote (FIFO)',
                 'tone' => 'warning',
             ],
             [
                 'label' => 'Ganho de vendas',
                 'value' => $this->currency($salesProfit),
-                'description' => 'Receita - CPV realizado',
+                'description' => 'Receita - custo do que foi vendido',
                 'tone' => $salesProfit >= 0 ? 'primary' : 'danger',
             ],
             [
@@ -155,7 +155,7 @@ class FinancialControl extends Page
                 'tone' => 'danger',
             ],
             [
-                'label' => 'CPV registado',
+                'label' => 'Custo do que foi vendido (lançado)',
                 'value' => $this->currency($cogsExpense),
                 'description' => 'Despesa técnica gerada automaticamente nas vendas',
                 'tone' => 'warning',
@@ -163,7 +163,7 @@ class FinancialControl extends Page
             [
                 'label' => 'Movimento líquido',
                 'value' => $this->currency($netMovement),
-                'description' => 'Receitas concluídas - despesas de caixa (sem CPV)',
+                'description' => 'Receitas concluídas - despesas de caixa (sem custo do que foi vendido)',
                 'tone' => $netMovement >= 0 ? 'info' : 'danger',
             ],
             [

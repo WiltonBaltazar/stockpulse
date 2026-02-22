@@ -23,7 +23,7 @@ class TopRecipesByCogsWidget extends BaseWidget
     public function table(Table $table): Table
     {
         return $table
-            ->heading('Top receitas por CPV/unidade')
+            ->heading('Top receitas por custo/unidade')
             ->query($this->getTopRecipesQuery())
             ->defaultSort('avg_cogs_per_unit', 'desc')
             ->paginated([5, 10, 25])
@@ -42,7 +42,7 @@ class TopRecipesByCogsWidget extends BaseWidget
                     ->formatStateUsing(fn (?float $state): string => number_format((float) round((float) $state), 0, ',', '.'))
                     ->sortable(),
                 Tables\Columns\TextColumn::make('avg_cogs_per_unit')
-                    ->label('CPV médio/unid.')
+                    ->label('Custo médio/unid.')
                     ->formatStateUsing(fn (?float $state): string => self::currency((float) $state))
                     ->sortable()
                     ->color('warning'),

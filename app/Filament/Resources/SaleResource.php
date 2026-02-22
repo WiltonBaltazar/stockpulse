@@ -104,7 +104,7 @@ class SaleResource extends Resource
                     })
                     ->searchable()
                     ->preload()
-                    ->helperText('Se selecionar receita, preço unitário e CPV são calculados automaticamente (FIFO) quando a venda estiver concluída.'),
+                    ->helperText('Se selecionar receita, preço unitário e custo do que foi vendido são calculados automaticamente (FIFO) quando a venda estiver concluída.'),
                 TextInput::make('item_name')
                     ->label('Item vendido')
                     ->requiredWithout('recipe_id')
@@ -206,7 +206,7 @@ class SaleResource extends Resource
                     ->formatStateUsing(fn (float $state): string => self::currency($state))
                     ->sortable(),
                 TextColumn::make('estimated_total_cost')
-                    ->label('CPV realizado')
+                    ->label('Custo do que foi vendido')
                     ->formatStateUsing(fn (?float $state): string => $state === null ? '-' : self::currency($state))
                     ->toggleable(),
                 TextColumn::make('estimated_profit')

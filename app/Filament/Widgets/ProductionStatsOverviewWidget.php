@@ -59,7 +59,7 @@ class ProductionStatsOverviewWidget extends BaseWidget
                 ->descriptionIcon('heroicon-m-cube')
                 ->color('success')
                 ->url(ProductionBatchResource::getUrl('index')),
-            Stat::make('CPV médio / unidade (30 dias)', $this->currency($cpvAvg30Days))
+            Stat::make('Custo médio / unidade (30 dias)', $this->currency($cpvAvg30Days))
                 ->description('Média do custo de produção por unidade')
                 ->descriptionIcon('heroicon-m-calculator')
                 ->color('warning')

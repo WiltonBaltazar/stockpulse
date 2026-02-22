@@ -125,7 +125,7 @@ class ProductionBatchResource extends Resource
                 Section::make('Guia rápido de termos')
                     ->schema([
                         Placeholder::make('guide_cpv')
-                            ->label('CPV (Custo dos Produtos Vendidos)')
+                            ->label('Custo de produção do lote')
                             ->content('É o custo total para produzir o lote: ingredientes + custos indiretos + embalagem.'),
                         Placeholder::make('guide_packaging')
                             ->label('Custo de embalagem')
@@ -135,10 +135,10 @@ class ProductionBatchResource extends Resource
                             ->content('Percentual para cobrir energia, gás, água e outras despesas operacionais.'),
                         Placeholder::make('guide_margin')
                             ->label('Margem por unidade')
-                            ->content('Diferença entre o preço sugerido e o CPV por unidade.'),
+                            ->content('Diferença entre o preço sugerido e o custo por unidade.'),
                     ])
                     ->columns(2),
-                Section::make('Pré-visualização de CPV')
+                Section::make('Pré-visualização de custos')
                     ->schema([
                         Placeholder::make('stock_status_indicator')
                             ->label('Estado do estoque')
@@ -176,10 +176,10 @@ class ProductionBatchResource extends Resource
                             ->label('Custos indiretos')
                             ->content(fn (Get $get): string => self::currency(self::previewFromState($get)['overhead_cost'] ?? 0.0)),
                         Placeholder::make('total_cogs_preview')
-                            ->label('CPV total')
+                            ->label('Custo total do lote')
                             ->content(fn (Get $get): string => self::currency(self::previewFromState($get)['total_cogs'] ?? 0.0)),
                         Placeholder::make('cogs_per_unit_preview')
-                            ->label('CPV por unidade')
+                            ->label('Custo por unidade')
                             ->content(fn (Get $get): string => self::currency(self::previewFromState($get)['cogs_per_unit'] ?? 0.0)),
                         Placeholder::make('suggested_price_preview')
                             ->label('Preço sugerido por unidade')
@@ -245,11 +245,11 @@ class ProductionBatchResource extends Resource
                     ->numeric(decimalPlaces: 0)
                     ->state(fn (ProductionBatch $record): int => $record->available_units),
                 TextColumn::make('total_cogs')
-                    ->label('CPV total')
+                    ->label('Custo total')
                     ->formatStateUsing(fn (float $state): string => self::currency($state))
                     ->sortable(),
                 TextColumn::make('cogs_per_unit')
-                    ->label('CPV/unidade')
+                    ->label('Custo/unidade')
                     ->formatStateUsing(fn (float $state): string => self::currency($state))
                     ->sortable(),
                 TextColumn::make('suggested_unit_price')
@@ -301,10 +301,10 @@ class ProductionBatchResource extends Resource
                             ->label('Custos indiretos')
                             ->formatStateUsing(fn (float $state): string => self::currency($state)),
                         TextEntry::make('total_cogs')
-                            ->label('CPV total')
+                            ->label('Custo total')
                             ->formatStateUsing(fn (float $state): string => self::currency($state)),
                         TextEntry::make('cogs_per_unit')
-                            ->label('CPV/unidade')
+                            ->label('Custo/unidade')
                             ->formatStateUsing(fn (float $state): string => self::currency($state)),
                         TextEntry::make('suggested_unit_price')
                             ->label('Preço sugerido')

@@ -182,7 +182,7 @@ class SaleService
                     'source' => FinancialTransaction::SOURCE_COGS,
                     'counterparty' => $sale->resolved_item_name,
                     'amount' => $this->roundMoney((float) $sale->estimated_total_cost),
-                    'notes' => 'CPV realizado automaticamente para a venda '.$sale->reference,
+                    'notes' => 'Custo do que foi vendido registado automaticamente para a venda '.$sale->reference,
                 ]
             );
 

@@ -98,7 +98,7 @@ class FinancialTransaction extends Model
             self::SOURCE_CREDITS => 'Créditos',
             self::SOURCE_PURCHASE => 'Compras de insumos',
             self::SOURCE_LOSS => 'Perdas e quebras',
-            self::SOURCE_COGS => 'CPV realizado',
+            self::SOURCE_COGS => 'Custo do que foi vendido',
             self::SOURCE_OTHER => 'Outras entradas/saídas',
         ];
     }
