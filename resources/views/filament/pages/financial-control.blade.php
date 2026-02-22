@@ -481,6 +481,7 @@
                             <th>Tipo</th>
                             <th>Estado</th>
                             <th class="fc-text-right">Valor</th>
+                            <th>Motivo / descrição</th>
                             <th>Referência</th>
                         </tr>
                     </thead>
@@ -499,11 +500,12 @@
                                 <td class="fc-text-right {{ $transaction['amount_tone'] === 'danger' ? 'fc-amount-danger' : 'fc-amount-success' }}">
                                     {{ $transaction['amount'] }}
                                 </td>
+                                <td>{{ $transaction['reason'] }}</td>
                                 <td>{{ $transaction['reference'] }}</td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" style="color: var(--fc-muted);">Sem transações para os filtros selecionados.</td>
+                                <td colspan="8" style="color: var(--fc-muted);">Sem transações para os filtros selecionados.</td>
                             </tr>
                         @endforelse
                     </tbody>

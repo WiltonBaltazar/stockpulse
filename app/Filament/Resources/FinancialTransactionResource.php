@@ -9,6 +9,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
@@ -80,6 +81,7 @@ class FinancialTransactionResource extends Resource
                     ->label('Tipo')
                     ->options(FinancialTransaction::typeOptions())
                     ->required()
+                    ->live()
                     ->native(false),
                 Select::make('status')
                     ->label('Estado')
@@ -112,13 +114,22 @@ class FinancialTransactionResource extends Resource
                     ->maxLength(255)
                     ->visible(fn ($get): bool => $get('source') === FinancialTransaction::SOURCE_CREDITS),
                 TextInput::make('counterparty')
-                    ->label('Utilizador/Cliente')
+                    ->label('Cliente / fornecedor')
                     ->maxLength(255),
+                Textarea::make('reason')
+                    ->label('Motivo / descrição')
+                    ->required(fn (Get $get): bool => (string) ($get('type') ?? '') === FinancialTransaction::TYPE_EXPENSE)
+                    ->helperText('Descreva o que gerou esta entrada/saída. Para despesas, este campo é obrigatório.')
+                    ->maxLength(1000)
+                    ->columnSpanFull(),
                 TextInput::make('reference')
-                    ->label('Referência')
-                    ->maxLength(255),
+                    ->label('Referência (automática)')
+                    ->disabled()
+                    ->dehydrated(false)
+                    ->placeholder('Gerada automaticamente ao guardar')
+                    ->helperText('Padrão automático: 3 letras + 8 caracteres (A-Z, 0-9).'),
                 Textarea::make('notes')
-                    ->label('Notas')
+                    ->label('Observações internas')
                     ->maxLength(1000)
                     ->columnSpanFull(),
             ])
@@ -162,8 +173,13 @@ class FinancialTransactionResource extends Resource
                     ->formatStateUsing(fn (?int $state): string => $state === null ? '-' : (string) $state)
                     ->toggleable(),
                 TextColumn::make('counterparty')
-                    ->label('Utilizador/Cliente')
+                    ->label('Cliente / fornecedor')
                     ->searchable()
+                    ->toggleable(),
+                TextColumn::make('reason')
+                    ->label('Motivo / descrição')
+                    ->searchable()
+                    ->limit(60)
                     ->toggleable(),
                 TextColumn::make('reference')
                     ->label('Referência')

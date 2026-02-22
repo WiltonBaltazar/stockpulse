@@ -254,6 +254,7 @@ class FinancialControl extends Page
                     'status_tone' => $this->statusTone($transaction->status),
                     'amount' => $this->currency((float) $transaction->amount),
                     'amount_tone' => $transaction->type === FinancialTransaction::TYPE_EXPENSE ? 'danger' : 'success',
+                    'reason' => trim((string) ($transaction->reason ?? '')) !== '' ? (string) $transaction->reason : ((string) ($transaction->notes ?? '') ?: '-'),
                     'reference' => $transaction->reference ?: '-',
                 ];
             });
@@ -296,6 +297,7 @@ class FinancialControl extends Page
                     $builder
                         ->where('counterparty', 'like', "%{$needle}%")
                         ->orWhere('reference', 'like', "%{$needle}%")
+                        ->orWhere('reason', 'like', "%{$needle}%")
                         ->orWhere('notes', 'like', "%{$needle}%")
                         ->orWhere('package_name', 'like', "%{$needle}%");
                 });

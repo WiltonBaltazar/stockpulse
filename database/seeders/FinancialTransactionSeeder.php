@@ -43,6 +43,7 @@ class FinancialTransactionSeeder extends Seeder
                 'source' => FinancialTransaction::SOURCE_PURCHASE,
                 'amount' => 980,
                 'counterparty' => 'Fornecedor de farinhas e massas',
+                'reason' => 'Compra de insumos para produção da semana.',
             ],
             [
                 'reference' => 'BUY-2026-011-%s',
@@ -52,6 +53,7 @@ class FinancialTransactionSeeder extends Seeder
                 'source' => FinancialTransaction::SOURCE_PURCHASE,
                 'amount' => 740,
                 'counterparty' => 'Fornecedor de frios e laticínios',
+                'reason' => 'Reposição de ingredientes perecíveis.',
             ],
             [
                 'reference' => 'LOSS-2026-012-%s',
@@ -61,6 +63,7 @@ class FinancialTransactionSeeder extends Seeder
                 'source' => FinancialTransaction::SOURCE_LOSS,
                 'amount' => 135,
                 'counterparty' => 'Quebra de produção de salgados',
+                'reason' => 'Perda por falha no ponto de fritura.',
             ],
             [
                 'reference' => 'LOSS-2026-013-%s',
@@ -70,6 +73,7 @@ class FinancialTransactionSeeder extends Seeder
                 'source' => FinancialTransaction::SOURCE_LOSS,
                 'amount' => 92,
                 'counterparty' => 'Produto devolvido (doces)',
+                'reason' => 'Devolução de lote com textura fora do padrão.',
             ],
             [
                 'reference' => 'OUT-2026-014-%s',
@@ -79,6 +83,7 @@ class FinancialTransactionSeeder extends Seeder
                 'source' => FinancialTransaction::SOURCE_OTHER,
                 'amount' => 350,
                 'counterparty' => 'Workshop presencial',
+                'reason' => 'Entrada extra de caixa por formação.',
             ],
             [
                 'reference' => 'OUT-2026-015-%s',
@@ -88,6 +93,7 @@ class FinancialTransactionSeeder extends Seeder
                 'source' => FinancialTransaction::SOURCE_OTHER,
                 'amount' => 210,
                 'counterparty' => 'Conta de eletricidade',
+                'reason' => 'Pagamento mensal de energia da produção.',
             ],
         ];
 

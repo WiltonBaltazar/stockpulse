@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Str;
 
 class FinancialTransaction extends Model
 {
@@ -39,6 +40,7 @@ class FinancialTransaction extends Model
         'source',
         'package_name',
         'counterparty',
+        'reason',
         'reference',
         'amount',
         'credits',
@@ -57,6 +59,18 @@ class FinancialTransaction extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    protected static function booted(): void
+    {
+        static::creating(function (self $transaction): void {
+            if (filled($transaction->reference)) {
+                return;
+            }
+
+            $seed = trim((string) ($transaction->reason ?: $transaction->counterparty ?: $transaction->source ?: ''));
+            $transaction->reference = self::generateReference((int) ($transaction->user_id ?? 0), $seed);
+        });
     }
 
     public static function typeOptions(): array
@@ -87,5 +101,46 @@ class FinancialTransaction extends Model
             self::SOURCE_COGS => 'CPV realizado',
             self::SOURCE_OTHER => 'Outras entradas/saídas',
         ];
+    }
+
+    public static function generateReference(int $userId, string $seedText = ''): string
+    {
+        $prefix = self::buildReferencePrefix($seedText);
+
+        do {
+            $reference = $prefix.self::randomUpperAlphaNumeric(8);
+
+            $query = self::query()->where('reference', $reference);
+            if ($userId > 0) {
+                $query->where('user_id', $userId);
+            }
+        } while ($query->exists());
+
+        return $reference;
+    }
+
+    private static function buildReferencePrefix(string $seedText): string
+    {
+        $lettersOnly = strtoupper((string) Str::of(Str::ascii($seedText))
+            ->replaceMatches('/[^A-Za-z]/', ''));
+
+        if ($lettersOnly === '') {
+            return 'FIN';
+        }
+
+        return str_pad(substr($lettersOnly, 0, 3), 3, 'X');
+    }
+
+    private static function randomUpperAlphaNumeric(int $length): string
+    {
+        $alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        $maxIndex = strlen($alphabet) - 1;
+        $token = '';
+
+        for ($i = 0; $i < $length; $i++) {
+            $token .= $alphabet[random_int(0, $maxIndex)];
+        }
+
+        return $token;
     }
 }
