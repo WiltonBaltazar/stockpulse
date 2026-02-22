@@ -30,11 +30,11 @@ class AdminPanelProvider extends PanelProvider
             ->login()
             ->passwordReset()
             ->colors([
-                'primary' => Color::Amber,
+                'primary' => Color::hex('#685D94'),
             ])
             ->renderHook(
                 PanelsRenderHook::AUTH_LOGIN_FORM_AFTER,
-                fn (): string => '<div style="margin-top:0.75rem;text-align:center;"><a href="'.url('/').'" style="font-size:0.875rem;font-weight:600;color:#b45309;text-decoration:none;">Ir para a página inicial</a></div>',
+                fn (): string => '<div style="margin-top:0.75rem;text-align:center;"><a href="'.url('/').'" style="font-size:0.875rem;font-weight:600;color:#685D94;text-decoration:none;">Ir para a página inicial</a></div>',
             )
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')

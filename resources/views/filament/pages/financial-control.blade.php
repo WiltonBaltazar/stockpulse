@@ -1,20 +1,20 @@
 <x-filament-panels::page>
     <style>
         .fc-wrap {
-            --fc-bg: #f8fafc;
+            --fc-bg: #f0eff4;
             --fc-card: #ffffff;
-            --fc-surface: #f9fafb;
-            --fc-text: #111827;
-            --fc-muted: #6b7280;
-            --fc-border: #e5e7eb;
-            --fc-primary: #d97706;
-            --fc-primary-soft: #fff7ed;
-            --fc-primary-strong: #9a3412;
+            --fc-surface: #f0eff4;
+            --fc-text: #000000;
+            --fc-muted: #685d94;
+            --fc-border: #cec7e5;
+            --fc-primary: #685d94;
+            --fc-primary-soft: #e0dde9;
+            --fc-primary-strong: #000000;
             --fc-success: #047857;
             --fc-danger: #b91c1c;
-            --fc-warning: #b45309;
-            --fc-info: #1d4ed8;
-            --fc-neutral: #475569;
+            --fc-warning: #685d94;
+            --fc-info: #685d94;
+            --fc-neutral: #685d94;
             border: 1px solid var(--fc-border);
             background: var(--fc-bg);
             border-radius: 1.25rem;
@@ -25,20 +25,20 @@
         }
 
         .dark .fc-wrap {
-            --fc-bg: #0f172a;
-            --fc-card: #111827;
-            --fc-surface: #1f2937;
-            --fc-text: #e5e7eb;
-            --fc-muted: #9ca3af;
-            --fc-border: #374151;
-            --fc-primary: #f59e0b;
-            --fc-primary-soft: #451a03;
-            --fc-primary-strong: #fde68a;
+            --fc-bg: #000000;
+            --fc-card: #131019;
+            --fc-surface: #1e1829;
+            --fc-text: #ffffff;
+            --fc-muted: #e0dde9;
+            --fc-border: #685d94;
+            --fc-primary: #cec7e5;
+            --fc-primary-soft: #352d4b;
+            --fc-primary-strong: #ffffff;
             --fc-success: #34d399;
             --fc-danger: #fca5a5;
-            --fc-warning: #fbbf24;
-            --fc-info: #93c5fd;
-            --fc-neutral: #cbd5e1;
+            --fc-warning: #cec7e5;
+            --fc-info: #e0dde9;
+            --fc-neutral: #e0dde9;
         }
 
         .fc-card {
@@ -117,14 +117,14 @@
             -moz-appearance: none;
             appearance: none;
             padding-right: 2.65rem;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='M5 7l5 5 5-5' stroke='%236b7280' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='M5 7l5 5 5-5' stroke='%23685d94' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
             background-repeat: no-repeat;
             background-size: 1.05rem 1.05rem;
             background-position: right .85rem center;
         }
 
         .dark select.fc-input {
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='M5 7l5 5 5-5' stroke='%239ca3af' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='M5 7l5 5 5-5' stroke='%23e0dde9' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
         }
 
         select.fc-input::-ms-expand {
@@ -136,12 +136,12 @@
         }
 
         .fc-input:focus {
-            outline: 2px solid rgba(217, 119, 6, 0.25);
+            outline: 2px solid rgba(104, 93, 148, 0.25);
             border-color: var(--fc-primary);
         }
 
         .dark .fc-input:focus {
-            outline-color: rgba(245, 158, 11, 0.3);
+            outline-color: rgba(206, 199, 229, 0.35);
         }
 
         .fc-actions {
@@ -316,8 +316,8 @@
         }
 
         .fc-badge-warning {
-            color: #92400e;
-            background: #fef3c7;
+            color: #000000;
+            background: #e0dde9;
         }
 
         .fc-badge-gray {
@@ -331,8 +331,8 @@
         }
 
         .dark .fc-badge-warning {
-            color: #fde68a;
-            background: #78350f;
+            color: #ffffff;
+            background: #685d94;
         }
 
         .dark .fc-badge-gray {

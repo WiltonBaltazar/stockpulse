@@ -3,21 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StockPulse | Gestão para Padaria e Salgados</title>
+    <title>StockPulse | Gestão para Produção e Vendas</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #fff8ea;
-            --surface: #fffdf7;
-            --surface-soft: #fff6df;
-            --text: #261a09;
-            --muted: #6b5a40;
-            --line: #ecd8ab;
-            --gold: #c78b1e;
-            --gold-strong: #9b680f;
-            --gold-soft: #fff1cf;
+            --primary: #685D94;
+            --soft-1: #E0DDE9;
+            --soft-2: #CEC7E5;
+            --soft-3: #F0EFF4;
+            --white: #FFFFFF;
+            --black: #000000;
+            --muted: rgba(0, 0, 0, 0.67);
             --ok: #0f766e;
             --danger: #b91c1c;
         }
@@ -28,31 +26,31 @@
             margin: 0;
             min-height: 100vh;
             font-family: "Manrope", sans-serif;
-            color: var(--text);
+            color: var(--black);
             background:
-                radial-gradient(circle at 88% 0%, rgba(199, 139, 30, 0.24), transparent 36%),
-                radial-gradient(circle at 0% 16%, rgba(255, 222, 154, 0.52), transparent 34%),
-                var(--bg);
+                radial-gradient(circle at 92% -5%, rgba(104, 93, 148, 0.20), transparent 35%),
+                radial-gradient(circle at 0% 18%, rgba(224, 221, 233, 0.75), transparent 32%),
+                var(--soft-3);
             padding: 1rem;
         }
 
         .page {
-            width: min(1180px, 100%);
+            width: min(1160px, 100%);
             margin: 0 auto;
             display: grid;
-            gap: 0.95rem;
+            gap: 0.9rem;
         }
 
         .topbar {
-            border: 1px solid var(--line);
-            background: rgba(255, 253, 247, 0.84);
+            border: 1px solid var(--soft-2);
+            background: rgba(255, 255, 255, 0.85);
             border-radius: 1rem;
             padding: 0.8rem 1rem;
             display: flex;
-            align-items: center;
             justify-content: space-between;
-            gap: 0.6rem;
+            align-items: center;
             flex-wrap: wrap;
+            gap: 0.6rem;
         }
 
         .brand {
@@ -60,84 +58,91 @@
             align-items: center;
             gap: 0.55rem;
             font-family: "Sora", sans-serif;
-            font-size: 1.1rem;
+            font-size: 1.08rem;
             font-weight: 800;
         }
 
         .brand-badge {
-            width: 1.85rem;
-            height: 1.85rem;
-            border-radius: 0.55rem;
+            width: 1.8rem;
+            height: 1.8rem;
+            border-radius: 0.5rem;
             display: inline-grid;
             place-items: center;
-            background: linear-gradient(150deg, #f7c866, var(--gold-strong));
-            color: #fffdf7;
-            font-size: 0.86rem;
+            color: var(--white);
+            background: var(--primary);
+            font-size: 0.84rem;
             font-weight: 800;
-            box-shadow: 0 10px 18px rgba(155, 104, 15, 0.24);
+            box-shadow: 0 10px 18px rgba(104, 93, 148, 0.32);
         }
 
-        .powered {
-            font-size: 0.83rem;
-            color: var(--muted);
-            font-weight: 700;
+        .powered-logo {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--soft-2);
+            background: var(--white);
+            border-radius: 0.6rem;
+            padding: 0.24rem 0.42rem;
+        }
+
+        .powered-logo img {
+            display: block;
+            height: 1.28rem;
+            width: auto;
         }
 
         .hero {
-            border-radius: 1.25rem;
-            border: 1px solid #8a5a0e;
+            border: 1px solid rgba(255, 255, 255, 0.24);
+            border-radius: 1.2rem;
             background:
-                radial-gradient(circle at 72% 0%, rgba(251, 211, 122, 0.28), transparent 40%),
-                linear-gradient(150deg, #6b4408, #8d5c0c 52%, #6e470a);
-            color: #fff7e8;
-            padding: 1.25rem;
+                radial-gradient(circle at 76% 0%, rgba(255, 255, 255, 0.18), transparent 40%),
+                linear-gradient(152deg, #4f4771, var(--primary));
+            color: var(--white);
+            padding: 1.2rem;
             display: grid;
-            gap: 0.9rem;
             grid-template-columns: 1.25fr 0.9fr;
+            gap: 0.9rem;
         }
 
         .tag {
             display: inline-flex;
-            align-items: center;
-            gap: 0.4rem;
+            border: 1px solid rgba(255, 255, 255, 0.42);
             border-radius: 9999px;
-            border: 1px solid rgba(255, 231, 176, 0.6);
-            background: rgba(61, 39, 4, 0.42);
-            color: #ffe7b2;
-            padding: 0.35rem 0.72rem;
+            padding: 0.34rem 0.7rem;
+            font-size: 0.75rem;
             font-weight: 800;
             text-transform: uppercase;
             letter-spacing: 0.06em;
-            font-size: 0.75rem;
+            background: rgba(255, 255, 255, 0.12);
         }
 
         h1 {
-            margin: 0.7rem 0 0;
+            margin: 0.75rem 0 0;
             font-family: "Sora", sans-serif;
             line-height: 1.08;
-            font-size: clamp(1.85rem, 4.8vw, 3rem);
-            max-width: 15ch;
+            font-size: clamp(1.85rem, 4.6vw, 2.9rem);
+            max-width: 14ch;
         }
 
         .hero p {
-            margin: 0.8rem 0 0;
-            color: #ffedc8;
+            margin: 0.78rem 0 0;
+            max-width: 54ch;
+            color: rgba(255, 255, 255, 0.92);
             line-height: 1.45;
-            max-width: 56ch;
         }
 
         .hero-cta {
             margin-top: 1rem;
             display: flex;
-            gap: 0.65rem;
             flex-wrap: wrap;
+            gap: 0.62rem;
         }
 
         .btn {
             display: inline-block;
-            border-radius: 0.72rem;
-            padding: 0.72rem 1rem;
             text-decoration: none;
+            border-radius: 0.72rem;
+            padding: 0.7rem 1rem;
             font-size: 0.9rem;
             font-weight: 800;
             transition: transform .2s ease;
@@ -146,85 +151,72 @@
         .btn:hover { transform: translateY(-1px); }
 
         .btn-main {
-            background: linear-gradient(180deg, #ffd684, #f7b83f);
-            color: #503301;
-            box-shadow: 0 10px 22px rgba(251, 190, 72, 0.28);
+            color: var(--primary);
+            background: var(--white);
         }
 
         .btn-ghost {
-            border: 1px solid rgba(255, 227, 166, 0.6);
-            color: #fff4db;
-            background: rgba(70, 44, 5, 0.4);
+            color: var(--white);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            background: rgba(255, 255, 255, 0.12);
         }
 
-        .hero-list {
-            border: 1px solid rgba(255, 225, 159, 0.42);
-            background: rgba(53, 34, 4, 0.44);
-            border-radius: 0.9rem;
-            padding: 0.85rem;
+        .hero-points {
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 0.85rem;
+            background: rgba(255, 255, 255, 0.11);
+            padding: 0.8rem;
         }
 
-        .hero-list h3 {
+        .hero-points h3 {
             margin: 0;
-            font-size: 0.85rem;
+            font-size: 0.82rem;
             text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: #ffe0a3;
-            font-weight: 800;
+            letter-spacing: 0.07em;
         }
 
-        .hero-list ul {
-            margin: 0.65rem 0 0;
+        .hero-points ul {
+            margin: 0.58rem 0 0;
             padding: 0;
             list-style: none;
             display: grid;
-            gap: 0.42rem;
+            gap: 0.4rem;
         }
 
-        .hero-list li {
-            border: 1px solid rgba(255, 221, 145, 0.24);
-            background: rgba(89, 56, 7, 0.42);
-            border-radius: 0.62rem;
-            padding: 0.55rem 0.65rem;
-            color: #fff4db;
-            font-size: 0.88rem;
-        }
-
-        .hero-list li strong {
-            display: block;
-            margin-bottom: 0.12rem;
-            font-size: 0.79rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: #ffd27c;
+        .hero-points li {
+            border: 1px solid rgba(255, 255, 255, 0.28);
+            border-radius: 0.6rem;
+            padding: 0.48rem 0.58rem;
+            font-size: 0.86rem;
+            background: rgba(255, 255, 255, 0.1);
         }
 
         .demo {
-            border: 1px solid var(--line);
-            background: var(--surface);
-            border-radius: 1rem;
+            border: 1px solid var(--soft-2);
+            background: var(--white);
+            border-radius: 0.95rem;
             padding: 1rem;
         }
 
         .demo h2 {
             margin: 0;
             font-family: "Sora", sans-serif;
-            font-size: 1.3rem;
+            font-size: 1.25rem;
         }
 
         .demo p {
-            margin: 0.45rem 0 0;
+            margin: 0.4rem 0 0;
             color: var(--muted);
-            font-size: 0.92rem;
+            font-size: 0.9rem;
         }
 
         .demo-frame {
-            margin: 0.9rem 0 0;
-            border: 1px solid #dfc286;
-            border-radius: 0.85rem;
+            margin-top: 0.8rem;
+            border: 1px solid var(--soft-2);
+            border-radius: 0.8rem;
             overflow: hidden;
-            background: #f6ead0;
-            min-height: 260px;
+            background: var(--soft-3);
+            min-height: 250px;
             position: relative;
         }
 
@@ -240,212 +232,174 @@
             inset: 0;
             display: grid;
             place-items: center;
-            padding: 1rem;
             text-align: center;
-            color: #6b4b12;
+            padding: 1rem;
+            color: var(--primary);
             font-weight: 700;
-            font-size: 0.92rem;
-            background: linear-gradient(180deg, #fff6de, #f6e4b9);
-        }
-
-        .demo-note {
-            margin-top: 0.55rem;
-            font-size: 0.81rem;
-            color: #6b5a40;
+            font-size: 0.9rem;
+            background: var(--soft-3);
         }
 
         .features {
             display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 0.8rem;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 0.75rem;
         }
 
         .feature {
-            border: 1px solid var(--line);
-            border-radius: 0.9rem;
-            background: var(--surface);
-            padding: 0.9rem;
+            border: 1px solid var(--soft-2);
+            border-radius: 0.85rem;
+            background: var(--white);
+            padding: 0.84rem;
         }
 
         .feature h3 {
             margin: 0;
             font-family: "Sora", sans-serif;
-            font-size: 1rem;
+            font-size: 0.96rem;
+            line-height: 1.25;
         }
 
         .feature p {
-            margin: 0.45rem 0 0;
+            margin: 0.4rem 0 0;
             color: var(--muted);
-            font-size: 0.89rem;
-            line-height: 1.42;
-        }
-
-        .feature .label {
-            margin-top: 0.6rem;
-            display: inline-flex;
-            border-radius: 9999px;
-            padding: 0.2rem 0.5rem;
-            font-size: 0.74rem;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: #8f5e0f;
-            background: var(--gold-soft);
-            border: 1px solid #f0d294;
+            font-size: 0.86rem;
+            line-height: 1.35;
         }
 
         .signup {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 0.85rem;
+            gap: 0.82rem;
         }
 
         .panel, .form {
-            border: 1px solid var(--line);
-            border-radius: 0.95rem;
-            background: var(--surface);
-            padding: 1rem;
+            border: 1px solid var(--soft-2);
+            border-radius: 0.92rem;
+            background: var(--white);
+            padding: 0.95rem;
         }
 
         .panel h2, .form h2 {
             margin: 0;
             font-family: "Sora", sans-serif;
-            font-size: 1.28rem;
+            font-size: 1.23rem;
         }
 
         .panel p, .form p {
-            margin: 0.45rem 0 0;
+            margin: 0.42rem 0 0;
             color: var(--muted);
-            font-size: 0.91rem;
+            font-size: 0.89rem;
         }
 
         .benefits {
-            margin-top: 0.8rem;
+            margin-top: 0.75rem;
             display: grid;
-            gap: 0.52rem;
+            gap: 0.46rem;
         }
 
         .benefit {
-            border: 1px solid #efd9ab;
-            border-radius: 0.7rem;
-            background: var(--surface-soft);
-            padding: 0.58rem 0.68rem;
-            color: #4e3a17;
-            font-size: 0.9rem;
+            border: 1px solid var(--soft-2);
+            background: var(--soft-3);
+            border-radius: 0.66rem;
+            padding: 0.5rem 0.62rem;
+            font-size: 0.86rem;
             line-height: 1.35;
-        }
-
-        .benefit strong {
-            display: block;
-            color: #87570c;
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            margin-bottom: 0.12rem;
+            color: #201b2d;
         }
 
         .errors {
-            margin: 0 0 0.75rem;
-            border-radius: 0.65rem;
+            margin: 0 0 0.72rem;
             border: 1px solid #fecaca;
             background: #fef2f2;
             color: var(--danger);
+            border-radius: 0.62rem;
+            padding: 0.56rem 0.65rem;
             font-size: 0.84rem;
             font-weight: 700;
-            padding: 0.56rem 0.65rem;
         }
 
-        .field {
-            margin-bottom: 0.76rem;
-        }
+        .field { margin-bottom: 0.74rem; }
 
         label {
             display: block;
-            margin-bottom: 0.32rem;
-            font-size: 0.86rem;
+            margin-bottom: 0.3rem;
+            font-size: 0.85rem;
             font-weight: 700;
         }
 
         input {
             width: 100%;
-            border: 1px solid #e6cb90;
-            border-radius: 0.7rem;
-            padding: 0.72rem 0.8rem;
+            border: 1px solid var(--soft-2);
+            border-radius: 0.66rem;
+            padding: 0.7rem 0.78rem;
             font: inherit;
-            color: var(--text);
-            background: #fff;
+            color: var(--black);
+            background: var(--white);
             transition: border-color .2s, box-shadow .2s;
         }
 
         input:focus {
             outline: none;
-            border-color: var(--gold);
-            box-shadow: 0 0 0 3px rgba(199, 139, 30, 0.18);
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(104, 93, 148, 0.2);
         }
 
         .submit {
             width: 100%;
             border: 0;
-            border-radius: 0.72rem;
-            padding: 0.82rem 1rem;
-            font: 800 0.95rem "Manrope", sans-serif;
-            color: #fffaf2;
-            background: linear-gradient(180deg, var(--gold), var(--gold-strong));
+            border-radius: 0.7rem;
+            padding: 0.8rem 1rem;
+            font: 800 0.94rem "Manrope", sans-serif;
+            color: var(--white);
+            background: linear-gradient(180deg, #786ca9, var(--primary));
             cursor: pointer;
         }
 
-        .form-links {
-            margin-top: 0.78rem;
+        .links {
+            margin-top: 0.72rem;
             display: flex;
             justify-content: space-between;
             gap: 0.6rem;
             flex-wrap: wrap;
-            font-size: 0.86rem;
+            font-size: 0.85rem;
         }
 
-        .form-links a {
-            color: #8f5c0d;
+        .links a {
+            color: var(--primary);
             text-decoration: none;
             font-weight: 800;
         }
 
         .status {
-            margin-top: 0.62rem;
+            margin-top: 0.6rem;
             border: 1px solid #a7f3d0;
-            border-radius: 0.65rem;
             background: #ecfdf5;
             color: var(--ok);
-            font-size: 0.82rem;
+            border-radius: 0.62rem;
+            padding: 0.52rem 0.65rem;
+            font-size: 0.81rem;
             font-weight: 700;
-            padding: 0.55rem 0.68rem;
         }
 
-        @media (max-width: 1040px) {
-            .hero {
-                grid-template-columns: 1fr;
-            }
+        .footer-powered {
+            margin: 0.15rem 0 0;
+            text-align: center;
+            font-size: 0.82rem;
+            color: var(--muted);
+            font-weight: 700;
+        }
 
-            .features {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-            }
-
-            .signup {
-                grid-template-columns: 1fr;
-            }
+        @media (max-width: 1024px) {
+            .hero { grid-template-columns: 1fr; }
+            .features { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .signup { grid-template-columns: 1fr; }
         }
 
         @media (max-width: 680px) {
-            body {
-                padding: 0.75rem;
-            }
-
-            .features {
-                grid-template-columns: 1fr;
-            }
-
-            .hero, .feature, .panel, .form, .demo, .topbar {
-                border-radius: 0.82rem;
-            }
+            body { padding: 0.72rem; }
+            .features { grid-template-columns: 1fr; }
+            .topbar, .hero, .demo, .feature, .panel, .form { border-radius: 0.78rem; }
         }
     </style>
 </head>
@@ -456,57 +410,39 @@
                 <span class="brand-badge">SP</span>
                 <span>StockPulse</span>
             </div>
-            <div class="powered">Powered by Cheesemania</div>
+            <div class="powered-logo">
+                <img src="{{ asset('images/cheesemania.png') }}" alt="Cheesemania">
+            </div>
         </header>
 
         <section class="hero">
             <div>
-                <span class="tag">Gestão completa para padaria e salgados</span>
-                <h1>Controle produção, vendas e dinheiro do seu negócio em um só painel.</h1>
-                <p>
-                    O StockPulse foi feito para quem produz e vende alimentos todos os dias.
-                    Você acompanha o custo para produzir, o valor vendido, o lucro real, as perdas e o nível de estoque
-                    sem depender de planilhas.
-                </p>
+                <span class="tag">Feito para produção alimentar</span>
+                <h1>Produza melhor. Venda melhor. Lucre com clareza.</h1>
+                <p>Controle custos, vendas, perdas e estoque em um só lugar.</p>
                 <div class="hero-cta">
                     <a class="btn btn-main" href="#cadastro">Criar conta grátis</a>
                     <a class="btn btn-ghost" href="{{ url('/admin/login') }}">Entrar no painel</a>
                 </div>
             </div>
 
-            <aside class="hero-list">
-                <h3>O que você recebe</h3>
+            <aside class="hero-points">
+                <h3>Impacto direto</h3>
                 <ul>
-                    <li>
-                        <strong>Custos de produção claros</strong>
-                        Veja o custo total de cada lote e quanto sobra de lucro por venda.
-                    </li>
-                    <li>
-                        <strong>Vendas registradas com precisão</strong>
-                        Registre vendas presenciais e digitais para medir o movimento real do caixa.
-                    </li>
-                    <li>
-                        <strong>Referência automática em cada venda</strong>
-                        O sistema cria código de referência para facilitar rastreio e conferência.
-                    </li>
-                    <li>
-                        <strong>Alertas de estoque antes da produção</strong>
-                        Saiba com antecedência quando faltar ingrediente para produzir.
-                    </li>
+                    <li>Preço de venda calculado automaticamente para itens de receita.</li>
+                    <li>Código de referência gerado em cada venda.</li>
+                    <li>Alerta visual quando faltar estoque para produzir ou vender.</li>
                 </ul>
             </aside>
         </section>
 
         <section class="demo">
-            <h2>Demonstração do painel financeiro</h2>
-            <p>
-                Exemplo real da tela de controlo financeiro, com filtros por período, métricas de receitas e despesas
-                e visão clara do desempenho do negócio.
-            </p>
+            <h2>Veja o painel financeiro em ação</h2>
+            <p>Filtros por período e visão clara de receitas, despesas e resultado.</p>
             <figure class="demo-frame">
                 <img
                     src="{{ asset('images/stockpulse-financial-control-demo.png') }}"
-                    alt="Demonstração do painel de controlo financeiro do StockPulse"
+                    alt="Painel financeiro do StockPulse"
                     loading="lazy"
                     onerror="this.closest('.demo-frame').classList.add('missing'); this.remove();"
                 >
@@ -515,66 +451,41 @@
 
         <section class="features">
             <article class="feature">
-                <h3>Controle de receitas e ingredientes</h3>
-                <p>Cadastre receitas, consumo por ingrediente e acompanhe o valor de cada item usado na produção.</p>
-                <span class="label">Produção</span>
+                <h3>Receitas e ingredientes</h3>
+                <p>Saiba exatamente quanto custa produzir cada item.</p>
             </article>
 
             <article class="feature">
-                <h3>Preço unitário calculado automaticamente</h3>
-                <p>Quando a venda é feita com base em receita, o sistema preenche o preço unitário automaticamente.</p>
-                <span class="label">Automação</span>
+                <h3>Vendas presenciais e digitais</h3>
+                <p>Registre tudo e acompanhe o dinheiro em movimento.</p>
             </article>
 
             <article class="feature">
-                <h3>Código de venda gerado na hora</h3>
-                <p>Cada venda recebe referência automática para facilitar busca, auditoria e organização.</p>
-                <span class="label">Rastreio</span>
+                <h3>Relatórios financeiros diretos</h3>
+                <p>Veja total vendido, total gasto, lucro e perdas.</p>
             </article>
 
             <article class="feature">
-                <h3>Indicador visual de viabilidade</h3>
-                <p>Antes de produzir ou vender, o sistema mostra em cores quando é possível continuar ou quando falta estoque.</p>
-                <span class="label">Alertas</span>
-            </article>
-
-            <article class="feature">
-                <h3>Painel financeiro de fácil leitura</h3>
-                <p>Visualize total vendido, total gasto, lucro, perdas e ticket médio no mesmo local.</p>
-                <span class="label">Financeiro</span>
-            </article>
-
-            <article class="feature">
-                <h3>Valores e quantidades padronizados</h3>
-                <p>Dinheiro sempre no formato local e quantidades sem casas decimais para evitar confusão na operação.</p>
-                <span class="label">Precisão</span>
+                <h3>Dados padronizados</h3>
+                <p>Valores monetários e quantidades sempre consistentes.</p>
             </article>
         </section>
 
         <section id="cadastro" class="signup">
             <article class="panel">
-                <h2>Tenha clareza total do seu negócio</h2>
-                <p>Cadastre-se e comece a controlar tudo com linguagem simples e dados confiáveis.</p>
+                <h2>Clareza para decidir rápido</h2>
+                <p>Use números reais para comprar, produzir e vender com segurança.</p>
 
                 <div class="benefits">
-                    <div class="benefit">
-                        <strong>Custos reais por lote</strong>
-                        Entenda quanto você gasta para produzir cada receita e quanto realmente ganha por venda.
-                    </div>
-                    <div class="benefit">
-                        <strong>Fluxo financeiro completo</strong>
-                        Acompanhe entradas e saídas para ver com clareza o resultado final do período.
-                    </div>
-                    <div class="benefit">
-                        <strong>Decisão com base em dados</strong>
-                        Ajuste preços, produção e compras com base no que está acontecendo na operação.
-                    </div>
+                    <div class="benefit">Veja o custo total de produção de cada lote.</div>
+                    <div class="benefit">Entenda o lucro por venda em tempo real.</div>
+                    <div class="benefit">Evite produção sem estoque suficiente.</div>
                 </div>
             </article>
 
             <article class="form">
                 <h2>Criar conta</h2>
-                <p>Sem cartão e com acesso imediato ao painel.</p>
+                <p>Acesso imediato ao painel.</p>
 
                 @if ($errors->any())
                     <div class="errors">
@@ -613,7 +524,7 @@
                     <button class="submit" type="submit">Criar conta e entrar no painel</button>
                 </form>
 
-                <div class="form-links">
+                <div class="links">
                     <span>Já tem acesso? <a href="{{ url('/admin/login') }}">Entrar</a></span>
                     <a href="{{ url('/') }}">Home</a>
                 </div>
@@ -621,6 +532,8 @@
                 <div class="status">Ao cadastrar, você entra direto no dashboard.</div>
             </article>
         </section>
+
+        <footer class="footer-powered">Powered by Cheesemania</footer>
     </main>
 
     <script>
