@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\ProductionBatchResource\Pages;
 
+use App\Filament\Concerns\RedirectsToResourceIndex;
 use App\Filament\Resources\ProductionBatchResource;
 use App\Models\ProductionBatch;
 use App\Services\ProductionBatchService;
@@ -14,6 +15,8 @@ use Illuminate\Validation\ValidationException;
 
 class CreateProductionBatch extends CreateRecord
 {
+    use RedirectsToResourceIndex;
+
     protected static string $resource = ProductionBatchResource::class;
 
     protected ?array $cachedPreview = null;

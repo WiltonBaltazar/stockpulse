@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\SaleResource\Pages;
 
+use App\Filament\Concerns\RedirectsToResourceIndex;
 use App\Filament\Resources\SaleResource;
 use App\Services\SaleService;
 use Filament\Actions;
@@ -11,6 +12,8 @@ use Illuminate\Support\Facades\Auth;
 
 class EditSale extends EditRecord
 {
+    use RedirectsToResourceIndex;
+
     protected static string $resource = SaleResource::class;
 
     /**

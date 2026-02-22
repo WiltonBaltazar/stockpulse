@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\RecipeResource\Pages;
 
+use App\Filament\Concerns\RedirectsToResourceIndex;
 use App\Filament\Resources\RecipeResource;
 use App\Models\Recipe;
 use Filament\Actions;
@@ -9,6 +10,8 @@ use Filament\Resources\Pages\EditRecord;
 
 class EditRecipe extends EditRecord
 {
+    use RedirectsToResourceIndex;
+
     protected static string $resource = RecipeResource::class;
 
     protected function getHeaderActions(): array
