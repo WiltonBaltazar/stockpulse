@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\SaleResource\Pages;
 use App\Models\ProductionBatch;
+use App\Models\Recipe;
 use App\Models\Sale;
 use App\Services\SaleService;
 use Filament\Forms\Components\DateTimePicker;
@@ -82,7 +83,7 @@ class SaleResource extends Resource
                 Select::make('recipe_id')
                     ->label('Receita (opcional)')
                     ->relationship('recipe', 'name', fn (Builder $query): Builder => $query
-                        ->where('is_active', true)
+                        ->when(Recipe::supportsActiveState(), fn (Builder $inner): Builder => $inner->where('is_active', true))
                         ->when(! (Auth::user()?->isAdmin() ?? false), fn (Builder $inner): Builder => $inner->where('user_id', Auth::id()))
                         ->orderBy('name')
                     )

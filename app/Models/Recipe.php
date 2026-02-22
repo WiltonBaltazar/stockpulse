@@ -5,9 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Schema;
 
 class Recipe extends Model
 {
+    private static ?bool $hasIsActiveColumn = null;
+
     protected $fillable = [
         'user_id',
         'name',
@@ -82,5 +85,14 @@ class Recipe extends Model
     public function getFinalUnitPriceAttribute(): float
     {
         return $this->unit_base_price + (float) $this->packaging_cost_per_unit;
+    }
+
+    public static function supportsActiveState(): bool
+    {
+        if (self::$hasIsActiveColumn === null) {
+            self::$hasIsActiveColumn = Schema::hasColumn((new self)->getTable(), 'is_active');
+        }
+
+        return self::$hasIsActiveColumn;
     }
 }

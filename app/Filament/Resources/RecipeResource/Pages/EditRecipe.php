@@ -24,9 +24,13 @@ class EditRecipe extends EditRecord
                 ->label('Arquivar')
                 ->icon('heroicon-o-archive-box')
                 ->color('warning')
-                ->visible(fn (): bool => (bool) $this->record->is_active)
+                ->visible(fn (): bool => Recipe::supportsActiveState() && (bool) $this->record->is_active)
                 ->requiresConfirmation()
                 ->action(function (): void {
+                    if (! Recipe::supportsActiveState()) {
+                        return;
+                    }
+
                     $this->record->update(['is_active' => false]);
                     $this->record->refresh();
                 }),
@@ -34,9 +38,13 @@ class EditRecipe extends EditRecord
                 ->label('Reativar')
                 ->icon('heroicon-o-arrow-path')
                 ->color('success')
-                ->visible(fn (): bool => ! $this->record->is_active)
+                ->visible(fn (): bool => Recipe::supportsActiveState() && ! $this->record->is_active)
                 ->requiresConfirmation()
                 ->action(function (): void {
+                    if (! Recipe::supportsActiveState()) {
+                        return;
+                    }
+
                     $this->record->update(['is_active' => true]);
                     $this->record->refresh();
                 }),

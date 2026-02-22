@@ -83,7 +83,9 @@ class ProductionBatchResource extends Resource
                         Select::make('recipe_id')
                             ->label('Receita')
                             ->relationship('recipe', 'name', function (Builder $query): void {
-                                $query->where('is_active', true);
+                                if (Recipe::supportsActiveState()) {
+                                    $query->where('is_active', true);
+                                }
 
                                 $user = Auth::user();
 
@@ -379,8 +381,11 @@ class ProductionBatchResource extends Resource
 
         $query = Recipe::query()
             ->with(['items.ingredient'])
-            ->whereKey($recipeId)
-            ->where('is_active', true);
+            ->whereKey($recipeId);
+
+        if (Recipe::supportsActiveState()) {
+            $query->where('is_active', true);
+        }
 
         if (! $user->isAdmin()) {
             $query->where('user_id', $user->id);

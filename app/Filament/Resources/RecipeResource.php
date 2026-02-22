@@ -224,7 +224,8 @@ class RecipeResource extends Resource
                     ->label('Estado')
                     ->badge()
                     ->formatStateUsing(fn (bool $state): string => $state ? 'Ativa' : 'Arquivada')
-                    ->color(fn (bool $state): string => $state ? 'success' : 'gray'),
+                    ->color(fn (bool $state): string => $state ? 'success' : 'gray')
+                    ->visible(fn (): bool => Recipe::supportsActiveState()),
                 TextColumn::make('priced_at')
                     ->label('Precificado em')
                     ->date()
@@ -250,7 +251,8 @@ class RecipeResource extends Resource
                     ->placeholder('Todas')
                     ->trueLabel('Ativas')
                     ->falseLabel('Arquivadas')
-                    ->default(true),
+                    ->default(true)
+                    ->visible(fn (): bool => Recipe::supportsActiveState()),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
@@ -258,16 +260,16 @@ class RecipeResource extends Resource
                     ->label('Arquivar')
                     ->icon('heroicon-o-archive-box')
                     ->color('warning')
-                    ->visible(fn (Recipe $record): bool => (bool) $record->is_active)
+                    ->visible(fn (Recipe $record): bool => Recipe::supportsActiveState() && (bool) $record->is_active)
                     ->requiresConfirmation()
-                    ->action(fn (Recipe $record): bool => $record->update(['is_active' => false])),
+                    ->action(fn (Recipe $record): bool => Recipe::supportsActiveState() ? $record->update(['is_active' => false]) : false),
                 Tables\Actions\Action::make('restore')
                     ->label('Reativar')
                     ->icon('heroicon-o-arrow-path')
                     ->color('success')
-                    ->visible(fn (Recipe $record): bool => ! $record->is_active)
+                    ->visible(fn (Recipe $record): bool => Recipe::supportsActiveState() && ! $record->is_active)
                     ->requiresConfirmation()
-                    ->action(fn (Recipe $record): bool => $record->update(['is_active' => true])),
+                    ->action(fn (Recipe $record): bool => Recipe::supportsActiveState() ? $record->update(['is_active' => true]) : false),
             ])
             ->bulkActions([
             ]);
