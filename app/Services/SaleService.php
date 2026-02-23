@@ -28,10 +28,15 @@ class SaleService
         if (filled($clientId)) {
             $client = Client::query()
                 ->whereKey($clientId)
-                ->where('user_id', $targetUser->id)
                 ->first();
 
             if (! $client) {
+                throw ValidationException::withMessages([
+                    'client_id' => 'Cliente não encontrado.',
+                ]);
+            }
+
+            if ((int) $client->user_id !== (int) $targetUser->id && ! $actor->isAdmin()) {
                 throw ValidationException::withMessages([
                     'client_id' => 'Cliente não encontrado.',
                 ]);

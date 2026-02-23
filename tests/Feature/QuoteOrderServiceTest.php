@@ -10,6 +10,7 @@ use App\Services\OrderService;
 use App\Services\QuoteService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class QuoteOrderServiceTest extends TestCase
@@ -135,5 +136,70 @@ class QuoteOrderServiceTest extends TestCase
         $this->assertCount(1, $preparedOrder['items']);
         $this->assertNull($preparedOrder['items'][0]['recipe_id']);
         $this->assertSame('Combo salgado personalizado', $preparedOrder['items'][0]['item_name']);
+    }
+
+    public function test_quote_created_without_client_can_be_updated_with_client_later(): void
+    {
+        $user = User::factory()->create();
+        $service = app(QuoteService::class);
+
+        $prepared = $service->prepareData($user, [
+            'status' => Quote::STATUS_DRAFT,
+            'type' => Quote::TYPE_PICKUP,
+            'items' => [
+                ['item_name' => 'Caixa de salgados', 'quantity' => 1, 'unit_price' => 300],
+            ],
+        ]);
+
+        $quote = Quote::query()->create($prepared['attributes']);
+        $service->syncItems($quote, $prepared['items']);
+
+        $client = Client::query()->create([
+            'user_id' => $user->id,
+            'name' => 'Cliente Tardio',
+            'is_active' => true,
+        ]);
+
+        $preparedUpdate = $service->prepareData($user, [
+            'client_id' => $client->id,
+            'status' => Quote::STATUS_SENT,
+            'type' => Quote::TYPE_PICKUP,
+            'reference' => $quote->reference,
+            'items' => [
+                ['item_name' => 'Caixa de salgados', 'quantity' => 1, 'unit_price' => 300],
+            ],
+        ], $quote->user);
+
+        $quote->forceFill($preparedUpdate['attributes'])->save();
+
+        $this->assertSame($client->id, $quote->fresh()->client_id);
+    }
+
+    public function test_admin_can_attach_client_from_different_owner_when_updating_quote(): void
+    {
+        $adminRole = Role::query()->firstOrCreate([
+            'name' => 'admin',
+            'guard_name' => 'web',
+        ]);
+
+        $admin = User::factory()->create();
+        $admin->assignRole($adminRole);
+
+        $owner = User::factory()->create();
+
+        $foreignClient = Client::query()->create([
+            'user_id' => $admin->id,
+            'name' => 'Cliente do Admin',
+            'is_active' => true,
+        ]);
+
+        $prepared = app(QuoteService::class)->prepareData($admin, [
+            'client_id' => $foreignClient->id,
+            'items' => [
+                ['item_name' => 'Produto avulso', 'quantity' => 1, 'unit_price' => 100],
+            ],
+        ], $owner);
+
+        $this->assertSame($foreignClient->id, $prepared['attributes']['client_id']);
     }
 }

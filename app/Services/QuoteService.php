@@ -21,7 +21,7 @@ class QuoteService
     public function prepareData(User $actor, array $data, ?User $owner = null): array
     {
         $targetUser = $owner ?? $actor;
-        $client = $this->resolveClient($targetUser, $data['client_id'] ?? null);
+        $client = $this->resolveClient($targetUser, $data['client_id'] ?? null, $actor);
         $items = $this->normalizeItems($targetUser, (array) ($data['items'] ?? []));
 
         $additionalFee = $this->roundMoney(max((float) ($data['additional_fee'] ?? 0), 0));
@@ -146,7 +146,7 @@ class QuoteService
         return $normalized;
     }
 
-    private function resolveClient(User $owner, mixed $clientId): ?Client
+    private function resolveClient(User $owner, mixed $clientId, ?User $actor = null): ?Client
     {
         if (! filled($clientId)) {
             return null;
@@ -154,7 +154,6 @@ class QuoteService
 
         $client = Client::query()
             ->whereKey($clientId)
-            ->where('user_id', $owner->id)
             ->first();
 
         if (! $client) {
@@ -163,7 +162,17 @@ class QuoteService
             ]);
         }
 
-        return $client;
+        if ((int) $client->user_id === (int) $owner->id) {
+            return $client;
+        }
+
+        if ($actor?->isAdmin()) {
+            return $client;
+        }
+
+        throw ValidationException::withMessages([
+            'client_id' => 'Cliente não encontrado.',
+        ]);
     }
 
     private function roundMoney(float $value): float

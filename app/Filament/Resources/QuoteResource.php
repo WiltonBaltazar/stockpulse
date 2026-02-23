@@ -118,7 +118,7 @@ class QuoteResource extends Resource
                         Select::make('client_id')
                             ->label('Cliente')
                             ->relationship('client', 'name', fn (Builder $query): Builder => $query
-                                ->when(! (Auth::user()?->isAdmin() ?? false), fn (Builder $inner): Builder => $inner->where('user_id', Auth::id()))
+                                ->where('user_id', self::resolveFormOwnerUserId())
                                 ->orderBy('name')
                             )
                             ->getOptionLabelFromRecordUsing(fn (Client $record): string => $record->contact_number ? $record->name.' ('.$record->contact_number.')' : $record->name)
@@ -145,7 +145,7 @@ class QuoteResource extends Resource
                                     ->columnSpanFull(),
                             ])
                             ->createOptionUsing(function (array $data): int {
-                                $data['user_id'] = Auth::id();
+                                $data['user_id'] = self::resolveFormOwnerUserId();
                                 $data['is_active'] = true;
 
                                 return Client::query()->create($data)->id;
@@ -350,5 +350,32 @@ class QuoteResource extends Resource
     private static function currency(float $value): string
     {
         return number_format($value, 2, ',', '.').' MT';
+    }
+
+    private static function resolveFormOwnerUserId(): int
+    {
+        $record = request()->route('record');
+
+        if ($record instanceof Quote) {
+            return (int) $record->user_id;
+        }
+
+        if (is_numeric($record)) {
+            $ownerId = Quote::query()
+                ->whereKey((int) $record)
+                ->value('user_id');
+
+            if ($ownerId) {
+                return (int) $ownerId;
+            }
+        }
+
+        $authId = Auth::id();
+
+        if ($authId !== null) {
+            return (int) $authId;
+        }
+
+        return 0;
     }
 }
