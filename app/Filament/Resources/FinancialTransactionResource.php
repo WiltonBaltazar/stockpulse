@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\FinancialTransactionResource\Pages;
+use App\Models\Feature;
 use App\Models\FinancialTransaction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
@@ -34,22 +35,26 @@ class FinancialTransactionResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return Auth::user()?->can('manage finances') ?? false;
+        return (Auth::user()?->can('manage finances') ?? false)
+            && (Auth::user()?->hasFeature(Feature::FINANCES) ?? false);
     }
 
     public static function canCreate(): bool
     {
-        return Auth::user()?->can('manage finances') ?? false;
+        return (Auth::user()?->can('manage finances') ?? false)
+            && (Auth::user()?->hasFeature(Feature::FINANCES) ?? false);
     }
 
     public static function canEdit($record): bool
     {
-        return Auth::user()?->can('manage finances') ?? false;
+        return (Auth::user()?->can('manage finances') ?? false)
+            && (Auth::user()?->hasFeature(Feature::FINANCES) ?? false);
     }
 
     public static function canDelete($record): bool
     {
-        return Auth::user()?->can('manage finances') ?? false;
+        return (Auth::user()?->can('manage finances') ?? false)
+            && (Auth::user()?->hasFeature(Feature::FINANCES) ?? false);
     }
 
     public static function getEloquentQuery(): Builder

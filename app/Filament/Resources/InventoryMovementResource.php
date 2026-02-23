@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\InventoryMovementResource\Pages;
+use App\Models\Feature;
 use App\Models\InventoryMovement;
 use Filament\Resources\Resource;
 use Filament\Tables\Columns\TextColumn;
@@ -25,7 +26,8 @@ class InventoryMovementResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return Auth::user()?->can('manage inventory') ?? false;
+        return (Auth::user()?->can('manage inventory') ?? false)
+            && (Auth::user()?->hasFeature(Feature::INVENTORY) ?? false);
     }
 
     public static function canCreate(): bool

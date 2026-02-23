@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets;
 
+use App\Models\Feature;
 use Illuminate\Support\Facades\Auth;
 
 class OperationsSectionHeadingWidget extends DashboardSectionHeadingWidget
@@ -14,6 +15,16 @@ class OperationsSectionHeadingWidget extends DashboardSectionHeadingWidget
 
     public static function canView(): bool
     {
-        return Auth::user()?->can('manage inventory') ?? false;
+        $user = Auth::user();
+        if (! $user) {
+            return false;
+        }
+
+        return $user->can('manage inventory') && $user->hasAnyFeature([
+            Feature::INGREDIENTS,
+            Feature::RECIPES,
+            Feature::INVENTORY,
+            Feature::PRODUCTION_BATCHES,
+        ]);
     }
 }

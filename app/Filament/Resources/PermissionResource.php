@@ -29,6 +29,7 @@ class PermissionResource extends Resource
         'manage users',
         'manage ingredients',
         'manage recipes',
+        'manage plans',
     ];
 
     public static function form(Form $form): Form

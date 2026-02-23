@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\QuoteResource\Pages;
 use App\Models\Client;
+use App\Models\Feature;
 use App\Models\Quote;
 use App\Models\Recipe;
 use App\Services\OrderService;
@@ -47,22 +48,26 @@ class QuoteResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return Auth::user()?->can('manage sales') ?? false;
+        return (Auth::user()?->can('manage sales') ?? false)
+            && (Auth::user()?->hasFeature(Feature::QUOTES) ?? false);
     }
 
     public static function canCreate(): bool
     {
-        return Auth::user()?->can('manage sales') ?? false;
+        return (Auth::user()?->can('manage sales') ?? false)
+            && (Auth::user()?->hasFeature(Feature::QUOTES) ?? false);
     }
 
     public static function canEdit($record): bool
     {
-        return Auth::user()?->can('manage sales') ?? false;
+        return (Auth::user()?->can('manage sales') ?? false)
+            && (Auth::user()?->hasFeature(Feature::QUOTES) ?? false);
     }
 
     public static function canDelete($record): bool
     {
-        return Auth::user()?->can('manage sales') ?? false;
+        return (Auth::user()?->can('manage sales') ?? false)
+            && (Auth::user()?->hasFeature(Feature::QUOTES) ?? false);
     }
 
     public static function getEloquentQuery(): Builder
@@ -295,6 +300,12 @@ class QuoteResource extends Resource
                     ->preload(),
             ])
             ->actions([
+                Tables\Actions\Action::make('download_quote')
+                    ->label('Cotação PDF')
+                    ->icon('heroicon-o-document-arrow-down')
+                    ->color('gray')
+                    ->url(fn (Quote $record): string => route('documents.quotes.pdf', ['quote' => $record]))
+                    ->openUrlInNewTab(),
                 Action::make('convert_to_order')
                     ->label('Gerar pedido')
                     ->icon('heroicon-o-clipboard-document-list')

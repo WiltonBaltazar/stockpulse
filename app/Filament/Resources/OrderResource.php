@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\OrderResource\Pages;
 use App\Models\Client;
+use App\Models\Feature;
 use App\Models\Order;
 use App\Models\Recipe;
 use App\Services\SaleService;
@@ -41,22 +42,26 @@ class OrderResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return Auth::user()?->can('manage sales') ?? false;
+        return (Auth::user()?->can('manage sales') ?? false)
+            && (Auth::user()?->hasFeature(Feature::ORDERS) ?? false);
     }
 
     public static function canCreate(): bool
     {
-        return Auth::user()?->can('manage sales') ?? false;
+        return (Auth::user()?->can('manage sales') ?? false)
+            && (Auth::user()?->hasFeature(Feature::ORDERS) ?? false);
     }
 
     public static function canEdit($record): bool
     {
-        return Auth::user()?->can('manage sales') ?? false;
+        return (Auth::user()?->can('manage sales') ?? false)
+            && (Auth::user()?->hasFeature(Feature::ORDERS) ?? false);
     }
 
     public static function canDelete($record): bool
     {
-        return Auth::user()?->can('manage sales') ?? false;
+        return (Auth::user()?->can('manage sales') ?? false)
+            && (Auth::user()?->hasFeature(Feature::ORDERS) ?? false);
     }
 
     public static function getEloquentQuery(): Builder
@@ -282,6 +287,12 @@ class OrderResource extends Resource
                     ->preload(),
             ])
             ->actions([
+                Tables\Actions\Action::make('download_slip')
+                    ->label('Comprovativo PDF')
+                    ->icon('heroicon-o-document-arrow-down')
+                    ->color('gray')
+                    ->url(fn (Order $record): string => route('documents.orders.slip', ['order' => $record]))
+                    ->openUrlInNewTab(),
                 Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([

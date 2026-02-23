@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Models\Feature;
 use App\Models\FinancialTransaction;
 use App\Models\Sale;
 use Filament\Pages\Page;
@@ -42,7 +43,8 @@ class FinancialControl extends Page
 
     public static function canAccess(): bool
     {
-        return Auth::user()?->can('manage finances') ?? false;
+        return (Auth::user()?->can('manage finances') ?? false)
+            && (Auth::user()?->hasFeature(Feature::FINANCES) ?? false);
     }
 
     public function setQuickRange(int $days): void

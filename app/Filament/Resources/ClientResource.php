@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\ClientResource\Pages;
 use App\Models\Client;
+use App\Models\Feature;
 use Closure;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -36,22 +37,26 @@ class ClientResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return Auth::user()?->can('manage clients') ?? false;
+        return (Auth::user()?->can('manage clients') ?? false)
+            && (Auth::user()?->hasFeature(Feature::CLIENTS) ?? false);
     }
 
     public static function canCreate(): bool
     {
-        return Auth::user()?->can('manage clients') ?? false;
+        return (Auth::user()?->can('manage clients') ?? false)
+            && (Auth::user()?->hasFeature(Feature::CLIENTS) ?? false);
     }
 
     public static function canEdit($record): bool
     {
-        return Auth::user()?->can('manage clients') ?? false;
+        return (Auth::user()?->can('manage clients') ?? false)
+            && (Auth::user()?->hasFeature(Feature::CLIENTS) ?? false);
     }
 
     public static function canDelete($record): bool
     {
-        return Auth::user()?->can('manage clients') ?? false;
+        return (Auth::user()?->can('manage clients') ?? false)
+            && (Auth::user()?->hasFeature(Feature::CLIENTS) ?? false);
     }
 
     public static function getEloquentQuery(): Builder

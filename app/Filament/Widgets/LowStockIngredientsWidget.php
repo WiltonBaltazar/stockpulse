@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets;
 
+use App\Models\Feature;
 use App\Models\Ingredient;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -18,7 +19,10 @@ class LowStockIngredientsWidget extends BaseWidget
 
     public static function canView(): bool
     {
-        return Auth::user()?->can('manage inventory') ?? false;
+        $user = Auth::user();
+
+        return ($user?->can('manage inventory') ?? false)
+            && ($user?->hasFeature(Feature::INGREDIENTS) ?? false);
     }
 
     public function table(Table $table): Table

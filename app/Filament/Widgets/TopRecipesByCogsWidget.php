@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets;
 
+use App\Models\Feature;
 use App\Models\Recipe;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -17,7 +18,11 @@ class TopRecipesByCogsWidget extends BaseWidget
 
     public static function canView(): bool
     {
-        return Auth::user()?->can('manage inventory') ?? false;
+        $user = Auth::user();
+
+        return ($user?->can('manage inventory') ?? false)
+            && ($user?->hasFeature(Feature::RECIPES) ?? false)
+            && ($user?->hasFeature(Feature::PRODUCTION_BATCHES) ?? false);
     }
 
     public function table(Table $table): Table

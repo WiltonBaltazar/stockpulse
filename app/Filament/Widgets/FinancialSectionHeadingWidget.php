@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets;
 
+use App\Models\Feature;
 use Illuminate\Support\Facades\Auth;
 
 class FinancialSectionHeadingWidget extends DashboardSectionHeadingWidget
@@ -14,6 +15,7 @@ class FinancialSectionHeadingWidget extends DashboardSectionHeadingWidget
 
     public static function canView(): bool
     {
-        return Auth::user()?->can('manage finances') ?? false;
+        return (Auth::user()?->can('manage finances') ?? false)
+            && (Auth::user()?->hasFeature(Feature::FINANCES) ?? false);
     }
 }

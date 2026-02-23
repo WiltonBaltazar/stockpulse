@@ -3,6 +3,7 @@
 namespace App\Filament\Widgets;
 
 use App\Filament\Resources\ProductionBatchResource;
+use App\Models\Feature;
 use App\Models\ProductionBatch;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
@@ -17,7 +18,10 @@ class ProductionStatsOverviewWidget extends BaseWidget
 
     public static function canView(): bool
     {
-        return Auth::user()?->can('manage inventory') ?? false;
+        $user = Auth::user();
+
+        return ($user?->can('manage inventory') ?? false)
+            && ($user?->hasFeature(Feature::PRODUCTION_BATCHES) ?? false);
     }
 
     protected function getStats(): array

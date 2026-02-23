@@ -14,7 +14,7 @@ class DatabaseSeeder extends Seeder
     {
         app(PermissionRegistrar::class)->forgetCachedPermissions();
 
-        foreach (['manage users', 'manage ingredients', 'manage recipes', 'manage inventory', 'manage finances', 'manage sales', 'manage clients'] as $permissionName) {
+        foreach (['manage users', 'manage ingredients', 'manage recipes', 'manage inventory', 'manage finances', 'manage sales', 'manage clients', 'manage plans'] as $permissionName) {
             Permission::query()->firstOrCreate([
                 'name' => $permissionName,
                 'guard_name' => 'web',
@@ -31,8 +31,10 @@ class DatabaseSeeder extends Seeder
             'guard_name' => 'web',
         ]);
 
-        $adminRole->syncPermissions(['manage users', 'manage ingredients', 'manage recipes', 'manage inventory', 'manage finances', 'manage sales', 'manage clients']);
+        $adminRole->syncPermissions(['manage users', 'manage ingredients', 'manage recipes', 'manage inventory', 'manage finances', 'manage sales', 'manage clients', 'manage plans']);
         $userRole->syncPermissions(['manage ingredients', 'manage recipes', 'manage inventory', 'manage finances', 'manage sales', 'manage clients']);
+
+        $this->call(PlanSeeder::class);
 
         $admin = User::query()->updateOrCreate([
             'email' => 'admin@bakeryapp.test',

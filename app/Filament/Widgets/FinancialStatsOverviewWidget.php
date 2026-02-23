@@ -3,6 +3,7 @@
 namespace App\Filament\Widgets;
 
 use App\Filament\Pages\FinancialControl;
+use App\Models\Feature;
 use App\Models\FinancialTransaction;
 use App\Models\Sale;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
@@ -18,7 +19,9 @@ class FinancialStatsOverviewWidget extends BaseWidget
 
     public static function canView(): bool
     {
-        return Auth::user()?->can('manage finances') ?? false;
+        return (Auth::user()?->can('manage finances') ?? false)
+            && (Auth::user()?->hasFeature(Feature::FINANCES) ?? false)
+            && (Auth::user()?->hasFeature(Feature::SALES) ?? false);
     }
 
     protected function getStats(): array

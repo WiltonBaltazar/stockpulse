@@ -7,6 +7,7 @@ use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
@@ -58,7 +59,11 @@ class User extends Authenticatable implements FilamentUser
 
     public function canAccessPanel(Panel $panel): bool
     {
-        return $this->hasAnyRole(['admin', 'user']);
+        if (! $this->hasAnyRole(['admin', 'user'])) {
+            return false;
+        }
+
+        return $this->activeSubscription()->exists();
     }
 
     public function ingredients(): HasMany
@@ -96,6 +101,22 @@ class User extends Authenticatable implements FilamentUser
         return $this->hasMany(Sale::class);
     }
 
+    public function subscriptions(): HasMany
+    {
+        return $this->hasMany(Subscription::class);
+    }
+
+    public function activeSubscription(): HasOne
+    {
+        return $this->hasOne(Subscription::class)
+            ->where('status', Subscription::STATUS_ACTIVE)
+            ->where(function ($query): void {
+                $query->whereNull('ends_at')
+                    ->orWhere('ends_at', '>', now());
+            })
+            ->latestOfMany('started_at');
+    }
+
     public function quotes(): HasMany
     {
         return $this->hasMany(Quote::class);
@@ -109,6 +130,69 @@ class User extends Authenticatable implements FilamentUser
     public function isAdmin(): bool
     {
         return $this->hasRole('admin');
+    }
+
+    public function hasFeature(string $code): bool
+    {
+        $code = trim($code);
+        if ($code === '') {
+            return false;
+        }
+
+        return in_array($code, $this->featureCodes(), true);
+    }
+
+    /**
+     * @param  array<int, string>  $codes
+     */
+    public function hasAnyFeature(array $codes): bool
+    {
+        if ($codes === []) {
+            return false;
+        }
+
+        $activeCodes = $this->featureCodes();
+        foreach ($codes as $code) {
+            if (in_array($code, $activeCodes, true)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public function featureCodes(): array
+    {
+        $subscription = $this->relationLoaded('activeSubscription')
+            ? $this->activeSubscription
+            : $this->activeSubscription()->with('plan.features')->first();
+
+        if (! $subscription) {
+            return [];
+        }
+
+        $plan = $subscription->relationLoaded('plan')
+            ? $subscription->plan
+            : $subscription->plan()->with('features')->first();
+
+        if (! $plan) {
+            return [];
+        }
+
+        $features = $plan->relationLoaded('features')
+            ? $plan->features
+            : $plan->features()->get();
+
+        return $features
+            ->pluck('code')
+            ->filter(fn ($value): bool => is_string($value) && trim($value) !== '')
+            ->map(fn (string $value): string => trim($value))
+            ->unique()
+            ->values()
+            ->all();
     }
 
     public static function normalizeMozambicanContact(?string $value): ?string

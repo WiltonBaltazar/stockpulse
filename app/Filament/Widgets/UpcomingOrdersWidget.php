@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets;
 
+use App\Models\Feature;
 use App\Models\Order;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -17,7 +18,8 @@ class UpcomingOrdersWidget extends BaseWidget
 
     public static function canView(): bool
     {
-        return Auth::user()?->can('manage sales') ?? false;
+        return (Auth::user()?->can('manage sales') ?? false)
+            && (Auth::user()?->hasFeature(Feature::ORDERS) ?? false);
     }
 
     public function table(Table $table): Table

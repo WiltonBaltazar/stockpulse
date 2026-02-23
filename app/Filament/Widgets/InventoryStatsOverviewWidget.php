@@ -4,6 +4,7 @@ namespace App\Filament\Widgets;
 
 use App\Filament\Resources\IngredientResource;
 use App\Filament\Resources\InventoryMovementResource;
+use App\Models\Feature;
 use App\Models\Ingredient;
 use App\Models\InventoryMovement;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
@@ -19,7 +20,11 @@ class InventoryStatsOverviewWidget extends BaseWidget
 
     public static function canView(): bool
     {
-        return Auth::user()?->can('manage inventory') ?? false;
+        $user = Auth::user();
+
+        return ($user?->can('manage inventory') ?? false)
+            && ($user?->hasFeature(Feature::INGREDIENTS) ?? false)
+            && ($user?->hasFeature(Feature::INVENTORY) ?? false);
     }
 
     protected function getStats(): array

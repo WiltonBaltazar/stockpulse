@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\ProductionBatchResource\Pages;
+use App\Models\Feature;
 use App\Models\ProductionBatch;
 use App\Models\Recipe;
 use App\Services\ProductionBatchService;
@@ -40,12 +41,14 @@ class ProductionBatchResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return Auth::user()?->can('manage inventory') ?? false;
+        return (Auth::user()?->can('manage inventory') ?? false)
+            && (Auth::user()?->hasFeature(Feature::PRODUCTION_BATCHES) ?? false);
     }
 
     public static function canCreate(): bool
     {
-        return Auth::user()?->can('manage inventory') ?? false;
+        return (Auth::user()?->can('manage inventory') ?? false)
+            && (Auth::user()?->hasFeature(Feature::PRODUCTION_BATCHES) ?? false);
     }
 
     public static function canEdit($record): bool

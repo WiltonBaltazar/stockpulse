@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\SaleResource\Pages;
 use App\Models\Client;
+use App\Models\Feature;
 use App\Models\ProductionBatch;
 use App\Models\Recipe;
 use App\Models\Sale;
@@ -43,22 +44,26 @@ class SaleResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return Auth::user()?->can('manage sales') ?? false;
+        return (Auth::user()?->can('manage sales') ?? false)
+            && (Auth::user()?->hasFeature(Feature::SALES) ?? false);
     }
 
     public static function canCreate(): bool
     {
-        return Auth::user()?->can('manage sales') ?? false;
+        return (Auth::user()?->can('manage sales') ?? false)
+            && (Auth::user()?->hasFeature(Feature::SALES) ?? false);
     }
 
     public static function canEdit($record): bool
     {
-        return Auth::user()?->can('manage sales') ?? false;
+        return (Auth::user()?->can('manage sales') ?? false)
+            && (Auth::user()?->hasFeature(Feature::SALES) ?? false);
     }
 
     public static function canDelete($record): bool
     {
-        return Auth::user()?->can('manage sales') ?? false;
+        return (Auth::user()?->can('manage sales') ?? false)
+            && (Auth::user()?->hasFeature(Feature::SALES) ?? false);
     }
 
     public static function getEloquentQuery(): Builder
@@ -309,6 +314,13 @@ class SaleResource extends Resource
                     ->preload(),
             ])
             ->actions([
+                Tables\Actions\Action::make('download_receipt')
+                    ->label('Recibo')
+                    ->icon('heroicon-o-document-arrow-down')
+                    ->color('gray')
+                    ->visible(fn (Sale $record): bool => $record->status === Sale::STATUS_COMPLETED)
+                    ->url(fn (Sale $record): string => route('documents.sales.receipt', ['sale' => $record]))
+                    ->openUrlInNewTab(),
                 Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([

@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\RecipeResource\Pages;
+use App\Models\Feature;
 use App\Models\Ingredient;
 use App\Models\Recipe;
 use App\Support\MeasurementUnitConverter;
@@ -55,7 +56,26 @@ class RecipeResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return Auth::user()?->can('manage recipes') ?? false;
+        return (Auth::user()?->can('manage recipes') ?? false)
+            && (Auth::user()?->hasFeature(Feature::RECIPES) ?? false);
+    }
+
+    public static function canCreate(): bool
+    {
+        return (Auth::user()?->can('manage recipes') ?? false)
+            && (Auth::user()?->hasFeature(Feature::RECIPES) ?? false);
+    }
+
+    public static function canEdit($record): bool
+    {
+        return (Auth::user()?->can('manage recipes') ?? false)
+            && (Auth::user()?->hasFeature(Feature::RECIPES) ?? false);
+    }
+
+    public static function canDelete($record): bool
+    {
+        return (Auth::user()?->can('manage recipes') ?? false)
+            && (Auth::user()?->hasFeature(Feature::RECIPES) ?? false);
     }
 
     public static function form(Form $form): Form

@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\IngredientResource\Pages;
+use App\Models\Feature;
 use App\Models\Ingredient;
 use App\Models\InventoryMovement;
 use App\Services\InventoryMovementService;
@@ -58,7 +59,26 @@ class IngredientResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return Auth::user()?->can('manage ingredients') ?? false;
+        return (Auth::user()?->can('manage ingredients') ?? false)
+            && (Auth::user()?->hasFeature(Feature::INGREDIENTS) ?? false);
+    }
+
+    public static function canCreate(): bool
+    {
+        return (Auth::user()?->can('manage ingredients') ?? false)
+            && (Auth::user()?->hasFeature(Feature::INGREDIENTS) ?? false);
+    }
+
+    public static function canEdit($record): bool
+    {
+        return (Auth::user()?->can('manage ingredients') ?? false)
+            && (Auth::user()?->hasFeature(Feature::INGREDIENTS) ?? false);
+    }
+
+    public static function canDelete($record): bool
+    {
+        return (Auth::user()?->can('manage ingredients') ?? false)
+            && (Auth::user()?->hasFeature(Feature::INGREDIENTS) ?? false);
     }
 
     public static function form(Form $form): Form

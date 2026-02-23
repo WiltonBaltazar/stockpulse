@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets;
 
+use App\Models\Feature;
 use Illuminate\Support\Facades\Auth;
 
 class CommercialSectionHeadingWidget extends DashboardSectionHeadingWidget
@@ -16,6 +17,19 @@ class CommercialSectionHeadingWidget extends DashboardSectionHeadingWidget
     {
         $user = Auth::user();
 
-        return ($user?->can('manage sales') ?? false) || ($user?->can('manage clients') ?? false);
+        if (! $user) {
+            return false;
+        }
+
+        if (! ($user->can('manage sales') || $user->can('manage clients'))) {
+            return false;
+        }
+
+        return $user->hasAnyFeature([
+            Feature::CLIENTS,
+            Feature::QUOTES,
+            Feature::ORDERS,
+            Feature::SALES,
+        ]);
     }
 }
