@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 
 class Sale extends Model
 {
@@ -28,6 +29,8 @@ class Sale extends Model
 
     protected $fillable = [
         'user_id',
+        'order_id',
+        'order_item_id',
         'recipe_id',
         'client_id',
         'item_name',
@@ -67,6 +70,16 @@ class Sale extends Model
     public function recipe(): BelongsTo
     {
         return $this->belongsTo(Recipe::class);
+    }
+
+    public function order(): BelongsTo
+    {
+        return $this->belongsTo(Order::class);
+    }
+
+    public function orderItem(): BelongsTo
+    {
+        return $this->belongsTo(OrderItem::class);
     }
 
     public function client(): BelongsTo
@@ -113,5 +126,46 @@ class Sale extends Model
         }
 
         return $this->item_name ?: 'Venda avulsa';
+    }
+
+    public static function generateReference(int $userId, string $seedText = ''): string
+    {
+        $prefix = self::buildReferencePrefix($seedText);
+
+        do {
+            $reference = $prefix.self::randomUpperAlphaNumeric(8);
+
+            $query = self::query()->where('reference', $reference);
+            if ($userId > 0) {
+                $query->where('user_id', $userId);
+            }
+        } while ($query->exists());
+
+        return $reference;
+    }
+
+    private static function buildReferencePrefix(string $seedText): string
+    {
+        $lettersOnly = strtoupper((string) Str::of(Str::ascii($seedText))
+            ->replaceMatches('/[^A-Za-z]/', ''));
+
+        if ($lettersOnly === '') {
+            return 'PRD';
+        }
+
+        return str_pad(substr($lettersOnly, 0, 3), 3, 'X');
+    }
+
+    private static function randomUpperAlphaNumeric(int $length): string
+    {
+        $alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        $maxIndex = strlen($alphabet) - 1;
+        $token = '';
+
+        for ($i = 0; $i < $length; $i++) {
+            $token .= $alphabet[random_int(0, $maxIndex)];
+        }
+
+        return $token;
     }
 }

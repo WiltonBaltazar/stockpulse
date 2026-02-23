@@ -34,6 +34,8 @@ class CreateOrder extends CreateRecord
 
     protected function afterCreate(): void
     {
-        app(OrderService::class)->syncItems($this->record, $this->itemsPayload);
+        $service = app(OrderService::class);
+        $service->syncItems($this->record, $this->itemsPayload);
+        $service->syncSalesAndFinancials($this->record);
     }
 }

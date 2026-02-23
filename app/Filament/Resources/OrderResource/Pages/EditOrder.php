@@ -54,7 +54,9 @@ class EditOrder extends EditRecord
 
     protected function afterSave(): void
     {
-        app(OrderService::class)->syncItems($this->record, $this->itemsPayload);
+        $service = app(OrderService::class);
+        $service->syncItems($this->record, $this->itemsPayload);
+        $service->syncSalesAndFinancials($this->record);
     }
 
     protected function getHeaderActions(): array

@@ -66,6 +66,11 @@ class Order extends Model
         return $this->hasMany(OrderItem::class);
     }
 
+    public function sales(): HasMany
+    {
+        return $this->hasMany(Sale::class);
+    }
+
     public static function statusOptions(): array
     {
         return [

@@ -7,6 +7,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Quote;
 use App\Models\Recipe;
+use App\Models\Sale;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -121,6 +122,90 @@ class OrderService
 
             return $order;
         });
+    }
+
+    public function syncSalesAndFinancials(Order $order): void
+    {
+        $order->loadMissing(['items.recipe', 'client']);
+        $existingSales = Sale::query()
+            ->where('order_id', $order->id)
+            ->get()
+            ->keyBy('order_item_id');
+
+        if (! $this->shouldRepresentAsSale($order)) {
+            $this->removeSalesForOrder($order);
+
+            return;
+        }
+
+        $orderItemIds = $order->items
+            ->pluck('id')
+            ->map(static fn ($id): int => (int) $id)
+            ->all();
+
+        foreach ($order->items as $item) {
+            $sale = $existingSales->get((int) $item->id) ?? new Sale();
+            $sale->forceFill([
+                'user_id' => $order->user_id,
+                'order_id' => $order->id,
+                'order_item_id' => $item->id,
+                'recipe_id' => $item->recipe_id,
+                'client_id' => $order->client_id,
+                'item_name' => $item->resolved_item_name,
+                'customer_name' => $order->client?->name,
+                'reference' => $sale->reference ?: Sale::generateReference((int) $order->user_id, $item->resolved_item_name),
+                'status' => Sale::STATUS_COMPLETED,
+                'channel' => Sale::CHANNEL_ONLINE,
+                'payment_method' => Sale::PAYMENT_OTHER,
+                'sold_at' => $order->order_date ?? now(),
+                'quantity' => max((int) $item->quantity, 1),
+                'unit_price' => $this->roundMoney((float) $item->unit_price),
+                'total_amount' => $this->roundMoney((float) $item->total_price),
+                'notes' => $sale->notes ?: 'Gerada automaticamente do pedido '.$order->reference,
+            ])->save();
+
+            $saleService = app(SaleService::class);
+
+            try {
+                $saleService->syncOperationalAndFinancials($sale);
+            } catch (ValidationException) {
+                $sale->forceFill([
+                    'estimated_unit_cost' => null,
+                    'estimated_total_cost' => null,
+                    'estimated_profit' => null,
+                ])->saveQuietly();
+
+                $saleService->syncFinancialTransaction($sale);
+            }
+        }
+
+        if ($orderItemIds === []) {
+            $this->removeSalesForOrder($order);
+
+            return;
+        }
+
+        $salesToRemove = Sale::query()
+            ->where('order_id', $order->id)
+            ->whereNotIn('order_item_id', $orderItemIds)
+            ->get();
+
+        foreach ($salesToRemove as $sale) {
+            app(SaleService::class)->removeOperationalAndFinancials($sale);
+            $sale->delete();
+        }
+    }
+
+    public function removeSalesForOrder(Order $order): void
+    {
+        $sales = Sale::query()
+            ->where('order_id', $order->id)
+            ->get();
+
+        foreach ($sales as $sale) {
+            app(SaleService::class)->removeOperationalAndFinancials($sale);
+            $sale->delete();
+        }
     }
 
     /**
@@ -265,5 +350,11 @@ class OrderService
         }
 
         return $token;
+    }
+
+    private function shouldRepresentAsSale(Order $order): bool
+    {
+        return $order->payment_status === Order::PAYMENT_PAID
+            && $order->status !== Order::STATUS_CANCELLED;
     }
 }

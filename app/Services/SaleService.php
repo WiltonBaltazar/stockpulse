@@ -9,7 +9,6 @@ use App\Models\Recipe;
 use App\Models\Sale;
 use App\Models\SaleBatchAllocation;
 use App\Models\User;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -421,30 +420,7 @@ class SaleService
 
     private function generateReference(User $user, string $productName): string
     {
-        $prefix = $this->buildReferencePrefix($productName);
-
-        do {
-            $reference = $prefix.$this->randomUpperAlphaNumeric(8);
-        } while (
-            Sale::query()
-                ->where('user_id', $user->id)
-                ->where('reference', $reference)
-                ->exists()
-        );
-
-        return $reference;
-    }
-
-    private function buildReferencePrefix(string $productName): string
-    {
-        $lettersOnly = strtoupper((string) Str::of(Str::ascii($productName))
-            ->replaceMatches('/[^A-Za-z]/', ''));
-
-        if ($lettersOnly === '') {
-            return 'PRD';
-        }
-
-        return str_pad(substr($lettersOnly, 0, 3), 3, 'X');
+        return Sale::generateReference($user->id, $productName);
     }
 
     /**
@@ -472,19 +448,6 @@ class SaleService
             'cogs' => $cogs,
             'cleanup' => $cleanup,
         ];
-    }
-
-    private function randomUpperAlphaNumeric(int $length): string
-    {
-        $alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-        $maxIndex = strlen($alphabet) - 1;
-        $token = '';
-
-        for ($i = 0; $i < $length; $i++) {
-            $token .= $alphabet[random_int(0, $maxIndex)];
-        }
-
-        return $token;
     }
 
     private function buildFinanceNotes(Sale $sale): string
