@@ -9,6 +9,7 @@ use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
+use Throwable;
 
 class DocumentController extends Controller
 {
@@ -23,14 +24,12 @@ class DocumentController extends Controller
 
         $filename = 'recibo-'.$this->safeCode($sale->reference ?: (string) $sale->id).'.pdf';
 
-        return Pdf::loadView('documents.sale-receipt', [
+        return $this->downloadPdf('documents.sale-receipt', [
             'sale' => $sale,
             'documentTitle' => 'Recibo de Venda',
             'issuedAt' => now(),
             'issuer' => $this->issuerData($sale->user),
-        ])
-            ->setPaper('a4')
-            ->download($filename);
+        ], $filename);
     }
 
     public function quotePdf(Quote $quote): Response
@@ -42,14 +41,12 @@ class DocumentController extends Controller
 
         $filename = 'cotacao-'.$this->safeCode($quote->reference ?: (string) $quote->id).'.pdf';
 
-        return Pdf::loadView('documents.quote-document', [
+        return $this->downloadPdf('documents.quote-document', [
             'quote' => $quote,
             'documentTitle' => 'Cotação',
             'issuedAt' => now(),
             'issuer' => $this->issuerData($quote->user),
-        ])
-            ->setPaper('a4')
-            ->download($filename);
+        ], $filename);
     }
 
     public function orderSlip(Order $order): Response
@@ -61,14 +58,12 @@ class DocumentController extends Controller
 
         $filename = 'pedido-'.$this->safeCode($order->reference ?: (string) $order->id).'.pdf';
 
-        return Pdf::loadView('documents.order-slip', [
+        return $this->downloadPdf('documents.order-slip', [
             'order' => $order,
             'documentTitle' => 'Comprovativo de Pedido',
             'issuedAt' => now(),
             'issuer' => $this->issuerData($order->user),
-        ])
-            ->setPaper('a4')
-            ->download($filename);
+        ], $filename);
     }
 
     private function ensureCanAccess(int $ownerId): void
@@ -104,5 +99,24 @@ class DocumentController extends Controller
         $clean = preg_replace('/-+/', '-', (string) $clean);
 
         return trim((string) $clean, '-') ?: 'DOC';
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     */
+    private function downloadPdf(string $view, array $payload, string $filename): Response
+    {
+        try {
+            return Pdf::loadView($view, $payload)
+                ->setPaper('a4')
+                ->download($filename);
+        } catch (Throwable $exception) {
+            report($exception);
+
+            abort(
+                500,
+                'Falha ao gerar PDF no servidor. Verifique permissões em storage/fonts e storage/app/dompdf/temp.'
+            );
+        }
     }
 }
