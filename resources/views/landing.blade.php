@@ -658,14 +658,26 @@
             text-align: center;
         }
 
+        .plans-grid {
+            margin-top: .9rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: .72rem;
+        }
+
         .price-card {
-            margin: .9rem auto 0;
-            width: min(520px, 100%);
+            margin: 0;
+            width: 100%;
             border: 1px solid #d7d0ea;
             border-radius: 1rem;
             overflow: hidden;
             background: #fff;
             box-shadow: var(--shadow-soft);
+        }
+
+        .price-card.is-selected {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(104, 93, 148, .18), var(--shadow-soft);
         }
 
         .price-head {
@@ -708,9 +720,22 @@
             font-family: "Manrope", sans-serif;
         }
 
+        .plan-duration {
+            display: block;
+            margin-top: .3rem;
+            font-size: .8rem;
+            color: rgba(255, 255, 255, .88);
+            font-family: "Manrope", sans-serif;
+        }
+
         .price-body {
             padding: .9rem;
             text-align: left;
+        }
+
+        .price-body .btn {
+            width: 100%;
+            text-align: center;
         }
 
         .price-line {
@@ -749,6 +774,16 @@
             margin-top: .3rem;
             background: linear-gradient(140deg, #5f5488, var(--primary));
             flex: 0 0 auto;
+        }
+
+        .plans-empty {
+            margin-top: .9rem;
+            border: 1px dashed #cdbfe8;
+            border-radius: .9rem;
+            padding: .9rem;
+            background: #fff;
+            color: rgba(20, 18, 35, .7);
+            font-size: .9rem;
         }
 
         .faq {
@@ -925,7 +960,8 @@
             color: #231e3f;
         }
 
-        input {
+        input,
+        select {
             width: 100%;
             border: 1px solid #e1dbf0;
             border-radius: .68rem;
@@ -936,7 +972,8 @@
             transition: border-color .2s, box-shadow .2s;
         }
 
-        input:focus {
+        input:focus,
+        select:focus {
             outline: none;
             border-color: var(--primary);
             box-shadow: 0 0 0 3px rgba(104, 93, 148, .2);
@@ -1196,29 +1233,93 @@
     </section>
 
     <section id="preco" class="container pricing section">
-        <h2>Comece hoje</h2>
-        <p class="lead">Plano unico com acesso total durante a fase atual do StockPulse.</p>
+        <h2>Planos StockPulse</h2>
 
-        <article class="price-card">
-            <header class="price-head">
-                <span class="chip">Atualmente gratis</span>
-                <h3>Plano completo</h3>
-                <div class="price">0,00 MT<small>No futuro o preco pode mudar.</small></div>
-            </header>
-            <div class="price-body">
-                <div class="price-line">Acesso a todas as funcionalidades principais</div>
-                <ul class="checklist">
-                    <li>Receitas, ingredientes e controlo de estoque com unidade amigavel</li>
-                    <li>Conversao automatica de medidas e densidade por ingrediente</li>
-                    <li>Vendas com preco e referencia automatica</li>
-                    <li>Painel financeiro completo por periodo</li>
-                    <li>Registo de perdas e compras com motivo/descricao</li>
-                </ul>
-                <div class="hero-cta" style="justify-content:flex-start; margin-top:.75rem;">
-                    <a class="btn btn-main" href="#cadastro">Criar conta agora</a>
-                </div>
+        @if (($plans ?? collect())->isEmpty())
+            <div class="plans-empty">Sem plano ativo no momento. Ative pelo menos um plano no backend para permitir novos cadastros.</div>
+        @else
+            @php
+                $orderedPlans = $plans->values();
+            @endphp
+            <div class="plans-grid">
+                @foreach ($orderedPlans as $planIndex => $plan)
+                    @php
+                        $months = max((int) ($plan->duration_months ?? 1), 1);
+                        $isSelected = (int) old('plan_id', $defaultPlanId) === (int) $plan->id;
+                        $comparisonPlan = $planIndex > 0 ? $orderedPlans->get($planIndex - 1) : null;
+                        $featureLabels = [
+                            'recipes' => 'Receitas com custo e preco automatico',
+                            'ingredients' => 'Ingredientes com custo e unidade amigavel',
+                            'inventory' => 'Movimentos de stock com historico completo',
+                            'production_batches' => 'Lotes de producao com alerta de viabilidade',
+                            'sales' => 'Vendas online e offline com referencia automatica',
+                            'finances' => 'Controle financeiro por periodo com indicadores',
+                            'clients' => 'Cadastro e historico de clientes',
+                            'quotes' => 'Cotacoes profissionais em PDF',
+                            'orders' => 'Pedidos com acompanhamento de entrega',
+                        ];
+                        $featureOrder = array_keys($featureLabels);
+                        $orderedFeatureItems = $plan->features
+                            ->sortBy(static function ($feature) use ($featureOrder): int {
+                                $position = array_search((string) $feature->code, $featureOrder, true);
+                                return $position === false ? 999 : $position;
+                            })
+                            ->map(static function ($feature) use ($featureLabels): array {
+                                $code = (string) $feature->code;
+
+                                return [
+                                    'code' => $code,
+                                    'label' => $featureLabels[$code] ?? (string) $feature->name,
+                                ];
+                            })
+                            ->values();
+                        $comparisonCodes = $comparisonPlan
+                            ? $comparisonPlan->features
+                                ->pluck('code')
+                                ->map(static fn ($code): string => (string) $code)
+                                ->all()
+                            : [];
+                        $displayFeatureItems = $comparisonPlan
+                            ? $orderedFeatureItems
+                                ->filter(static fn (array $item): bool => ! in_array($item['code'], $comparisonCodes, true))
+                                ->values()
+                            : $orderedFeatureItems;
+                        $featureLabelsToRender = $displayFeatureItems->pluck('label');
+                        $priceLine = $comparisonPlan
+                            ? 'Funcionalidades do plano '.$comparisonPlan->name.' + extras deste plano'
+                            : 'Funcionalidades inclusas neste plano';
+                    @endphp
+                    <article class="price-card {{ $isSelected ? 'is-selected' : '' }}" data-plan-card data-plan-id="{{ $plan->id }}">
+                        <header class="price-head">
+                            <span class="chip">{{ (float) $plan->price <= 0 ? 'Atualmente gratis' : 'Plano ativo' }}</span>
+                            <h3>{{ $plan->name }}</h3>
+                            <div class="price">
+                                {{ number_format((float) $plan->price, 2, ',', '.') }} {{ $plan->currency }}
+                                <small>{{ filled($plan->description) ? $plan->description : 'Plano de acesso ao StockPulse.' }}</small>
+                                <span class="plan-duration">Validade: {{ $months }} {{ $months > 1 ? 'meses' : 'mes' }}</span>
+                            </div>
+                        </header>
+                        <div class="price-body">
+                            <div class="price-line">{{ $priceLine }}</div>
+                            <ul class="checklist">
+                                @forelse ($featureLabelsToRender as $featureLabel)
+                                    <li>{{ $featureLabel }}</li>
+                                @empty
+                                    @if ($comparisonPlan)
+                                        <li>Sem funcionalidades extras em relacao ao plano {{ $comparisonPlan->name }}</li>
+                                    @else
+                                        <li>Acesso principal ao sistema</li>
+                                    @endif
+                                @endforelse
+                            </ul>
+                            <div class="hero-cta" style="justify-content:flex-start; margin-top:.75rem;">
+                                <a class="btn btn-main choose-plan-btn" href="#cadastro" data-plan-id="{{ $plan->id }}">Selecionar e criar conta</a>
+                            </div>
+                        </div>
+                    </article>
+                @endforeach
             </div>
-        </article>
+        @endif
     </section>
 
     <section id="faq" class="container faq section">
@@ -1256,10 +1357,10 @@
             </article>
             <article class="faq-item">
                 <button class="faq-button" type="button">
-                    <span>O plano esta mesmo em 0,00 MT agora?</span>
+                    <span>Como escolho o plano no cadastro?</span>
                     <span class="faq-icon">+</span>
                 </button>
-                <div class="faq-content">Sim. Atualmente o plano esta gratis em 0,00 MT. Esse valor pode ser ajustado no futuro.</div>
+                <div class="faq-content">Escolha um plano na secao de planos e ele entra automaticamente no formulario. Tambem pode selecionar manualmente no campo de plano.</div>
             </article>
         </div>
     </section>
@@ -1293,6 +1394,20 @@
             <form method="POST" action="{{ route('landing.signup') }}">
                 @csrf
 
+                <div class="field">
+                    <label for="plan_id">Plano</label>
+                    <select id="plan_id" name="plan_id" required>
+                        @forelse (($plans ?? collect()) as $plan)
+                            @php($months = max((int) ($plan->duration_months ?? 1), 1))
+                            <option value="{{ $plan->id }}" @selected((int) old('plan_id', $defaultPlanId) === (int) $plan->id)>
+                                {{ $plan->name }} - {{ number_format((float) $plan->price, 2, ',', '.') }} {{ $plan->currency }} / {{ $months }} {{ $months > 1 ? 'meses' : 'mes' }}
+                            </option>
+                        @empty
+                            <option value="">Sem plano ativo</option>
+                        @endforelse
+                    </select>
+                </div>
+
                 <div class="grid-2">
                     <div class="field">
                         <label for="name">Nome</label>
@@ -1320,7 +1435,7 @@
                     </div>
                 </div>
 
-                <button class="submit" type="submit">Criar conta e entrar no painel</button>
+                <button class="submit" type="submit" @disabled(($plans ?? collect())->isEmpty())>Criar conta e entrar no painel</button>
             </form>
         </article>
     </section>
@@ -1380,6 +1495,37 @@
                     if (!isActive) {
                         item.classList.add('active');
                     }
+                });
+            });
+
+            const planSelect = document.getElementById('plan_id');
+            const planCards = Array.from(document.querySelectorAll('[data-plan-card]'));
+            const planButtons = Array.from(document.querySelectorAll('.choose-plan-btn'));
+
+            const markSelectedPlan = (planId) => {
+                planCards.forEach((card) => {
+                    const cardPlanId = String(card.getAttribute('data-plan-id') || '');
+                    card.classList.toggle('is-selected', cardPlanId === String(planId));
+                });
+            };
+
+            if (planSelect) {
+                markSelectedPlan(planSelect.value);
+
+                planSelect.addEventListener('change', () => {
+                    markSelectedPlan(planSelect.value);
+                });
+            }
+
+            planButtons.forEach((button) => {
+                button.addEventListener('click', () => {
+                    if (!planSelect) return;
+
+                    const selectedPlanId = String(button.getAttribute('data-plan-id') || '');
+                    if (!selectedPlanId) return;
+
+                    planSelect.value = selectedPlanId;
+                    markSelectedPlan(selectedPlanId);
                 });
             });
         })();
