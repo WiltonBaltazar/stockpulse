@@ -39,7 +39,7 @@ class SaleResource extends Resource
 
     protected static ?string $pluralModelLabel = 'vendas';
 
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort = 4;
 
     public static function canViewAny(): bool
     {

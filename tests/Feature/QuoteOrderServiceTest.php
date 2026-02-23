@@ -1,0 +1,100 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Models\Client;
+use App\Models\Quote;
+use App\Models\User;
+use App\Services\OrderService;
+use App\Services\QuoteService;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Validation\ValidationException;
+use Tests\TestCase;
+
+class QuoteOrderServiceTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_quote_service_calculates_total_with_fee_and_discount(): void
+    {
+        $user = User::factory()->create();
+        $client = Client::query()->create([
+            'user_id' => $user->id,
+            'name' => 'Cliente Teste',
+            'is_active' => true,
+        ]);
+
+        $prepared = app(QuoteService::class)->prepareData($user, [
+            'client_id' => $client->id,
+            'status' => Quote::STATUS_DRAFT,
+            'type' => Quote::TYPE_DELIVERY,
+            'additional_fee' => 10,
+            'discount' => 5,
+            'items' => [
+                ['item_name' => 'Bolo', 'quantity' => 2, 'unit_price' => 10],
+                ['item_name' => 'Salgado', 'quantity' => 1, 'unit_price' => 20],
+            ],
+        ]);
+
+        $this->assertSame($client->id, $prepared['attributes']['client_id']);
+        $this->assertSame(45.0, (float) $prepared['attributes']['total_amount']);
+        $this->assertCount(2, $prepared['items']);
+    }
+
+    public function test_order_service_creates_order_from_quote_and_marks_quote_as_converted(): void
+    {
+        $user = User::factory()->create();
+        $client = Client::query()->create([
+            'user_id' => $user->id,
+            'name' => 'Cliente Conversão',
+            'is_active' => true,
+        ]);
+
+        $quoteService = app(QuoteService::class);
+        $preparedQuote = $quoteService->prepareData($user, [
+            'client_id' => $client->id,
+            'status' => Quote::STATUS_APPROVED,
+            'type' => Quote::TYPE_PICKUP,
+            'items' => [
+                ['item_name' => 'Empada', 'quantity' => 10, 'unit_price' => 12],
+            ],
+        ]);
+
+        $quote = Quote::query()->create($preparedQuote['attributes']);
+        $quoteService->syncItems($quote, $preparedQuote['items']);
+
+        $order = app(OrderService::class)->createFromQuote($quote);
+
+        $this->assertDatabaseHas('orders', [
+            'id' => $order->id,
+            'quote_id' => $quote->id,
+            'user_id' => $user->id,
+        ]);
+        $this->assertDatabaseCount('order_items', 1);
+        $this->assertDatabaseHas('quotes', [
+            'id' => $quote->id,
+            'status' => Quote::STATUS_CONVERTED,
+        ]);
+    }
+
+    public function test_quote_service_rejects_client_from_another_user(): void
+    {
+        $user = User::factory()->create();
+        $other = User::factory()->create();
+
+        $foreignClient = Client::query()->create([
+            'user_id' => $other->id,
+            'name' => 'Cliente Externo',
+            'is_active' => true,
+        ]);
+
+        $this->expectException(ValidationException::class);
+
+        app(QuoteService::class)->prepareData($user, [
+            'client_id' => $foreignClient->id,
+            'items' => [
+                ['item_name' => 'Teste', 'quantity' => 1, 'unit_price' => 10],
+            ],
+        ]);
+    }
+}

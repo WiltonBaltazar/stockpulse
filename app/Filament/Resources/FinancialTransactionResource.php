@@ -30,7 +30,7 @@ class FinancialTransactionResource extends Resource
 
     protected static ?string $pluralModelLabel = 'transações financeiras';
 
-    protected static ?int $navigationSort = 4;
+    protected static ?int $navigationSort = 6;
 
     public static function canViewAny(): bool
     {

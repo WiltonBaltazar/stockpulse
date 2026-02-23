@@ -54,6 +54,16 @@ class Recipe extends Model
         return $this->hasMany(Sale::class);
     }
 
+    public function quoteItems(): HasMany
+    {
+        return $this->hasMany(QuoteItem::class);
+    }
+
+    public function orderItems(): HasMany
+    {
+        return $this->hasMany(OrderItem::class);
+    }
+
     public function getIngredientsCostAttribute(): float
     {
         $items = $this->relationLoaded('items')

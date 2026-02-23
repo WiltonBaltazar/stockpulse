@@ -36,6 +36,16 @@ class Client extends Model
         return $this->hasMany(Sale::class);
     }
 
+    public function quotes(): HasMany
+    {
+        return $this->hasMany(Quote::class);
+    }
+
+    public function orders(): HasMany
+    {
+        return $this->hasMany(Order::class);
+    }
+
     public static function normalizeMozambicanContact(?string $value): ?string
     {
         return User::normalizeMozambicanContact($value);
