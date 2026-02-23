@@ -20,7 +20,7 @@
     <table class="header">
         <tr>
             <td>
-                <h1 class="title">{{ strtoupper($documentTitle) }}</h1>
+                <h1 class="title">{{ \Illuminate\Support\Str::upper($documentTitle) }}</h1>
                 <p class="subtitle">Documento emitido em {{ $issuedAt->format('d/m/Y H:i') }}</p>
             </td>
             <td style="text-align:right;">
