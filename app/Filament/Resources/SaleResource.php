@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\SaleResource\Pages;
+use App\Models\Client;
 use App\Models\ProductionBatch;
 use App\Models\Recipe;
 use App\Models\Sale;
@@ -38,7 +39,7 @@ class SaleResource extends Resource
 
     protected static ?string $pluralModelLabel = 'vendas';
 
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort = 2;
 
     public static function canViewAny(): bool
     {
@@ -62,7 +63,7 @@ class SaleResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        $query = parent::getEloquentQuery()->with(['recipe', 'user']);
+        $query = parent::getEloquentQuery()->with(['recipe', 'user', 'client']);
 
         $user = Auth::user();
         if (! $user) {
@@ -112,6 +113,54 @@ class SaleResource extends Resource
                     ->disabled(fn (Get $get): bool => filled($get('recipe_id')))
                     ->maxLength(255)
                     ->helperText('Use para vendas avulsas (salgados, bebidas, extras).'),
+                Select::make('client_id')
+                    ->label('Cliente cadastrado (opcional)')
+                    ->relationship('client', 'name', fn (Builder $query): Builder => $query
+                        ->when(! (Auth::user()?->isAdmin() ?? false), fn (Builder $inner): Builder => $inner->where('user_id', Auth::id()))
+                        ->orderBy('name')
+                    )
+                    ->getOptionLabelFromRecordUsing(fn (Client $record): string => $record->contact_number ? $record->name.' ('.$record->contact_number.')' : $record->name)
+                    ->createOptionForm([
+                        TextInput::make('name')
+                            ->label('Nome')
+                            ->required()
+                            ->maxLength(255),
+                        TextInput::make('contact_number')
+                            ->label('Contacto')
+                            ->placeholder('84 123 4567')
+                            ->maxLength(40),
+                        TextInput::make('email')
+                            ->label('Email')
+                            ->email()
+                            ->maxLength(255),
+                        TextInput::make('address')
+                            ->label('Endereço')
+                            ->maxLength(255),
+                        Textarea::make('notes')
+                            ->label('Notas')
+                            ->maxLength(1000)
+                            ->columnSpanFull(),
+                    ])
+                    ->createOptionUsing(function (array $data): int {
+                        $data['user_id'] = Auth::id();
+                        $data['is_active'] = true;
+
+                        return Client::query()->create($data)->id;
+                    })
+                    ->live()
+                    ->afterStateUpdated(function (?string $state, Set $set): void {
+                        if (! $state) {
+                            return;
+                        }
+
+                        $client = Client::query()->find($state);
+                        if ($client) {
+                            $set('customer_name', $client->name);
+                        }
+                    })
+                    ->searchable(['name', 'contact_number', 'email'])
+                    ->preload()
+                    ->helperText('Selecione para usar um cliente já registado, com histórico de compras.'),
                 DateTimePicker::make('sold_at')
                     ->label('Data/hora da venda')
                     ->required()
@@ -160,8 +209,11 @@ class SaleResource extends Resource
                     ->helperText('Em vendas por receita, este valor é preenchido automaticamente.')
                     ->suffix('MT'),
                 TextInput::make('customer_name')
-                    ->label('Cliente')
-                    ->maxLength(255),
+                    ->label('Cliente (nome livre)')
+                    ->requiredWithout('client_id')
+                    ->disabled(fn (Get $get): bool => filled($get('client_id')))
+                    ->maxLength(255)
+                    ->helperText('Preencha apenas quando o cliente não estiver cadastrado.'),
                 Textarea::make('notes')
                     ->label('Notas')
                     ->maxLength(1000)
@@ -221,7 +273,16 @@ class SaleResource extends Resource
                     ->toggleable(),
                 TextColumn::make('customer_name')
                     ->label('Cliente')
-                    ->searchable()
+                    ->getStateUsing(fn (Sale $record): string => $record->client?->name ?: ($record->customer_name ?: '-'))
+                    ->searchable(
+                        query: function (Builder $query, string $search): Builder {
+                            return $query->where(function (Builder $inner) use ($search): void {
+                                $inner
+                                    ->where('customer_name', 'like', "%{$search}%")
+                                    ->orWhereHas('client', fn (Builder $clientQuery): Builder => $clientQuery->where('name', 'like', "%{$search}%"));
+                            });
+                        }
+                    )
                     ->toggleable(),
                 TextColumn::make('user.name')
                     ->label('Registado por')
@@ -238,6 +299,14 @@ class SaleResource extends Resource
                 SelectFilter::make('payment_method')
                     ->label('Pagamento')
                     ->options(Sale::paymentOptions()),
+                SelectFilter::make('client_id')
+                    ->label('Cliente')
+                    ->relationship('client', 'name', fn (Builder $query): Builder => $query
+                        ->when(! (Auth::user()?->isAdmin() ?? false), fn (Builder $inner): Builder => $inner->where('user_id', Auth::id()))
+                        ->orderBy('name')
+                    )
+                    ->searchable()
+                    ->preload(),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),

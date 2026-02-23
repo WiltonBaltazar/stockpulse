@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Client;
 use App\Models\Recipe;
 use App\Models\Sale;
 use App\Models\User;
@@ -45,6 +46,7 @@ class SaleSeeder extends Seeder
                 'quantity' => 24,
                 'unit_price' => 18.00,
                 'customer_name' => 'Balcão',
+                'client' => 'Cliente Walk-in',
                 'reference' => 'OFF-001-%s',
                 'days_ago' => 8,
                 'notes' => '[seed] Venda balcão de pão doce.',
@@ -57,6 +59,7 @@ class SaleSeeder extends Seeder
                 'quantity' => 45,
                 'unit_price' => 14.00,
                 'customer_name' => 'Balcão manhã',
+                'client' => 'Cantina Horizonte',
                 'reference' => 'OFF-002-%s',
                 'days_ago' => 7,
                 'notes' => '[seed] Venda de coxinha no atendimento local.',
@@ -69,6 +72,7 @@ class SaleSeeder extends Seeder
                 'quantity' => 8,
                 'unit_price' => 95.00,
                 'customer_name' => 'Pedido Instagram',
+                'client' => 'Eventos MZ',
                 'reference' => 'ONL-003-%s',
                 'days_ago' => 6,
                 'notes' => '[seed] Encomenda online de bolo.',
@@ -81,6 +85,7 @@ class SaleSeeder extends Seeder
                 'quantity' => 20,
                 'unit_price' => 22.00,
                 'customer_name' => 'Encomenda escritório',
+                'client' => 'Empresa Sol Nascente',
                 'reference' => 'ONL-004-%s',
                 'days_ago' => 5,
                 'notes' => '[seed] Encomenda online de empadas.',
@@ -93,6 +98,7 @@ class SaleSeeder extends Seeder
                 'quantity' => 40,
                 'unit_price' => 8.50,
                 'customer_name' => 'Cantina local',
+                'client' => 'Café Central Maputo',
                 'reference' => 'OFF-005-%s',
                 'days_ago' => 4,
                 'notes' => '[seed] Venda para parceiro local.',
@@ -105,6 +111,7 @@ class SaleSeeder extends Seeder
                 'quantity' => 28,
                 'unit_price' => 16.00,
                 'customer_name' => 'Venda rápida',
+                'client' => 'Cliente Walk-in',
                 'reference' => 'OFF-006-%s',
                 'days_ago' => 3,
                 'notes' => '[seed] Venda rápida de rissol no balcão.',
@@ -117,6 +124,7 @@ class SaleSeeder extends Seeder
                 'quantity' => 34,
                 'unit_price' => 13.00,
                 'customer_name' => 'Balcão fim de tarde',
+                'client' => 'Cliente Walk-in',
                 'reference' => 'OFF-007-%s',
                 'days_ago' => 2,
                 'notes' => '[seed] Venda de pastel de queijo.',
@@ -129,6 +137,7 @@ class SaleSeeder extends Seeder
                 'quantity' => 10,
                 'unit_price' => 68.00,
                 'customer_name' => 'Pedido WhatsApp',
+                'client' => 'Eventos MZ',
                 'reference' => 'ONL-008-%s',
                 'days_ago' => 2,
                 'notes' => '[seed] Combo misto sem receita específica.',
@@ -141,6 +150,7 @@ class SaleSeeder extends Seeder
                 'quantity' => 12,
                 'unit_price' => 20.00,
                 'customer_name' => 'Evento corporativo',
+                'client' => 'Empresa Sol Nascente',
                 'reference' => 'ONL-009-%s',
                 'days_ago' => 1,
                 'notes' => '[seed] Pedido aguardando confirmação de pagamento.',
@@ -153,6 +163,7 @@ class SaleSeeder extends Seeder
                 'quantity' => 18,
                 'unit_price' => 14.00,
                 'customer_name' => 'Pedido cancelado',
+                'client' => 'Cantina Horizonte',
                 'reference' => 'ONL-010-%s',
                 'days_ago' => 1,
                 'notes' => '[seed] Cancelado por atraso de confirmação.',
@@ -163,9 +174,14 @@ class SaleSeeder extends Seeder
             ->where('user_id', $user->id)
             ->get()
             ->keyBy('name');
+        $clientsByName = Client::query()
+            ->where('user_id', $user->id)
+            ->get()
+            ->keyBy('name');
 
         foreach ($sales as $data) {
             $recipe = isset($data['recipe']) ? $recipesByName->get($data['recipe']) : null;
+            $client = isset($data['client']) ? $clientsByName->get($data['client']) : null;
 
             $reference = sprintf($data['reference'], $user->id);
             $quantity = round((float) $data['quantity'], 3);
@@ -179,7 +195,8 @@ class SaleSeeder extends Seeder
                 'status' => $data['status'],
                 'quantity' => $quantity,
                 'unit_price' => $unitPrice,
-                'customer_name' => $data['customer_name'],
+                'client_id' => $client?->id,
+                'customer_name' => $client?->name ?? ($data['customer_name'] ?? null),
                 'reference' => $reference,
                 'sold_at' => now()->subDays((int) $data['days_ago']),
                 'notes' => $data['notes'].' ['.$user->email.']',

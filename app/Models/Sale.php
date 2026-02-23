@@ -29,6 +29,7 @@ class Sale extends Model
     protected $fillable = [
         'user_id',
         'recipe_id',
+        'client_id',
         'item_name',
         'customer_name',
         'reference',
@@ -66,6 +67,11 @@ class Sale extends Model
     public function recipe(): BelongsTo
     {
         return $this->belongsTo(Recipe::class);
+    }
+
+    public function client(): BelongsTo
+    {
+        return $this->belongsTo(Client::class);
     }
 
     public function batchAllocations(): HasMany

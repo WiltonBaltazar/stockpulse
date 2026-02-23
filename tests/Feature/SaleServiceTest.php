@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Client;
 use App\Models\FinancialTransaction;
 use App\Models\ProductionBatch;
 use App\Models\Recipe;
@@ -16,6 +17,61 @@ use Tests\TestCase;
 class SaleServiceTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_it_uses_registered_client_data_when_creating_sale(): void
+    {
+        $user = User::factory()->create();
+
+        $client = Client::query()->create([
+            'user_id' => $user->id,
+            'name' => 'Cantina Horizonte',
+            'contact_number' => '+258842202020',
+            'is_active' => true,
+        ]);
+
+        $service = app(SaleService::class);
+        $prepared = $service->prepareData($user, [
+            'item_name' => 'Empada de frango',
+            'status' => Sale::STATUS_COMPLETED,
+            'channel' => Sale::CHANNEL_OFFLINE,
+            'payment_method' => Sale::PAYMENT_CASH,
+            'quantity' => 6,
+            'unit_price' => 20,
+            'client_id' => $client->id,
+            'customer_name' => 'Texto manual que deve ser ignorado',
+            'sold_at' => now(),
+        ]);
+
+        $this->assertSame($client->id, $prepared['client_id']);
+        $this->assertSame('Cantina Horizonte', $prepared['customer_name']);
+    }
+
+    public function test_it_rejects_client_from_another_user(): void
+    {
+        $user = User::factory()->create();
+        $otherUser = User::factory()->create();
+
+        $foreignClient = Client::query()->create([
+            'user_id' => $otherUser->id,
+            'name' => 'Cliente Externo',
+            'is_active' => true,
+        ]);
+
+        $service = app(SaleService::class);
+
+        $this->expectException(ValidationException::class);
+
+        $service->prepareData($user, [
+            'item_name' => 'Coxinha',
+            'status' => Sale::STATUS_COMPLETED,
+            'channel' => Sale::CHANNEL_OFFLINE,
+            'payment_method' => Sale::PAYMENT_CASH,
+            'quantity' => 2,
+            'unit_price' => 12,
+            'client_id' => $foreignClient->id,
+            'sold_at' => now(),
+        ]);
+    }
 
     public function test_it_allocates_recipe_sales_fifo_and_syncs_financials(): void
     {

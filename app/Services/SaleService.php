@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Client;
 use App\Models\FinancialTransaction;
 use App\Models\ProductionBatch;
 use App\Models\Recipe;
@@ -21,6 +22,22 @@ class SaleService
         $quantity = max((int) round((float) ($data['quantity'] ?? 0)), 1);
         $recipeId = $data['recipe_id'] ?? null;
         $itemName = trim((string) ($data['item_name'] ?? ''));
+        $customerName = trim((string) ($data['customer_name'] ?? ''));
+        $client = null;
+        $clientId = $data['client_id'] ?? null;
+
+        if (filled($clientId)) {
+            $client = Client::query()
+                ->whereKey($clientId)
+                ->where('user_id', $targetUser->id)
+                ->first();
+
+            if (! $client) {
+                throw ValidationException::withMessages([
+                    'client_id' => 'Cliente não encontrado.',
+                ]);
+            }
+        }
 
         if (! $recipeId && $itemName === '') {
             throw ValidationException::withMessages([
@@ -57,6 +74,10 @@ class SaleService
             ]);
         }
 
+        if ($client) {
+            $customerName = $client->name;
+        }
+
         $totalAmount = $this->roundMoney(((float) $quantity) * $unitPrice);
 
         if ($estimatedTotalCost !== null) {
@@ -70,7 +91,9 @@ class SaleService
 
         return array_merge($data, [
             'user_id' => $targetUser->id,
+            'client_id' => $client?->id,
             'item_name' => $itemName === '' ? null : $itemName,
+            'customer_name' => $customerName === '' ? null : $customerName,
             'reference' => $reference,
             'quantity' => $quantity,
             'unit_price' => $unitPrice,
