@@ -234,15 +234,15 @@ class OrderService
                     ->whereKey($recipeId)
                     ->where('user_id', $owner->id)
                     ->first();
-
-                if (! $recipe) {
-                    throw ValidationException::withMessages([
-                        "items.$index.recipe_id" => 'Receita não encontrada para este item.',
-                    ]);
-                }
             }
 
             $itemName = trim((string) ($item['item_name'] ?? ''));
+            if (! $recipe && filled($recipeId) && $itemName === '') {
+                throw ValidationException::withMessages([
+                    "items.$index.recipe_id" => 'Receita não encontrada para este item.',
+                ]);
+            }
+
             if ($itemName === '' && $recipe) {
                 $itemName = $recipe->name;
             }

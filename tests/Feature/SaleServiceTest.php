@@ -73,6 +73,27 @@ class SaleServiceTest extends TestCase
         ]);
     }
 
+    public function test_it_accepts_custom_sale_when_recipe_id_is_invalid_but_item_name_is_present(): void
+    {
+        $user = User::factory()->create();
+        $service = app(SaleService::class);
+
+        $prepared = $service->prepareData($user, [
+            'recipe_id' => 999999,
+            'item_name' => 'Kit salgado personalizado',
+            'status' => Sale::STATUS_COMPLETED,
+            'channel' => Sale::CHANNEL_OFFLINE,
+            'payment_method' => Sale::PAYMENT_CASH,
+            'quantity' => 3,
+            'unit_price' => 200,
+            'sold_at' => now(),
+        ]);
+
+        $this->assertNull($prepared['recipe_id']);
+        $this->assertSame('Kit salgado personalizado', $prepared['item_name']);
+        $this->assertSame(600.0, (float) $prepared['total_amount']);
+    }
+
     public function test_it_allocates_recipe_sales_fifo_and_syncs_financials(): void
     {
         $user = User::factory()->create();

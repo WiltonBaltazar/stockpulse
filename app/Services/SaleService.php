@@ -57,16 +57,22 @@ class SaleService
                 ->first();
 
             if (! $recipe) {
-                throw ValidationException::withMessages([
-                    'recipe_id' => 'Receita não encontrada.',
-                ]);
+                if ($itemName === '') {
+                    throw ValidationException::withMessages([
+                        'recipe_id' => 'Receita não encontrada.',
+                    ]);
+                }
+
+                $recipeId = null;
             }
 
-            $unitPrice = $this->estimateSaleUnitPrice($recipe, $targetUser);
-            $estimatedUnitCost = $this->roundMoney($this->estimateUnitCost($recipe, $targetUser));
-            $estimatedTotalCost = $this->roundMoney($estimatedUnitCost * (float) $quantity);
+            if ($recipe) {
+                $unitPrice = $this->estimateSaleUnitPrice($recipe, $targetUser);
+                $estimatedUnitCost = $this->roundMoney($this->estimateUnitCost($recipe, $targetUser));
+                $estimatedTotalCost = $this->roundMoney($estimatedUnitCost * (float) $quantity);
 
-            $itemName = $recipe->name;
+                $itemName = $recipe->name;
+            }
         } elseif ($unitPrice <= 0) {
             throw ValidationException::withMessages([
                 'unit_price' => 'Informe um preço unitário maior que zero.',
@@ -90,6 +96,7 @@ class SaleService
 
         return array_merge($data, [
             'user_id' => $targetUser->id,
+            'recipe_id' => $recipeId ?: null,
             'client_id' => $client?->id,
             'item_name' => $itemName === '' ? null : $itemName,
             'customer_name' => $customerName === '' ? null : $customerName,

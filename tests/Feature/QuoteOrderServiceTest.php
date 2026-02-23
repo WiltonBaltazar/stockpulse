@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Client;
+use App\Models\Order;
 use App\Models\Quote;
 use App\Models\User;
 use App\Services\OrderService;
@@ -96,5 +97,43 @@ class QuoteOrderServiceTest extends TestCase
                 ['item_name' => 'Teste', 'quantity' => 1, 'unit_price' => 10],
             ],
         ]);
+    }
+
+    public function test_quote_and_order_accept_custom_item_even_with_invalid_recipe_id(): void
+    {
+        $user = User::factory()->create();
+        $service = app(QuoteService::class);
+
+        $preparedQuote = $service->prepareData($user, [
+            'items' => [
+                [
+                    'recipe_id' => 999999,
+                    'item_name' => 'Pacote de mini-salgados',
+                    'quantity' => 2,
+                    'unit_price' => 350,
+                ],
+            ],
+        ]);
+
+        $this->assertCount(1, $preparedQuote['items']);
+        $this->assertNull($preparedQuote['items'][0]['recipe_id']);
+        $this->assertSame('Pacote de mini-salgados', $preparedQuote['items'][0]['item_name']);
+
+        $preparedOrder = app(OrderService::class)->prepareData($user, [
+            'payment_status' => Order::PAYMENT_OPEN,
+            'status' => Order::STATUS_PENDING,
+            'items' => [
+                [
+                    'recipe_id' => 999999,
+                    'item_name' => 'Combo salgado personalizado',
+                    'quantity' => 1,
+                    'unit_price' => 500,
+                ],
+            ],
+        ]);
+
+        $this->assertCount(1, $preparedOrder['items']);
+        $this->assertNull($preparedOrder['items'][0]['recipe_id']);
+        $this->assertSame('Combo salgado personalizado', $preparedOrder['items'][0]['item_name']);
     }
 }
